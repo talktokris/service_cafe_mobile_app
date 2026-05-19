@@ -12,7 +12,8 @@ class ReferralTreeStyle {
   static const parentStubH = 14.0;
   /// Indent per tree level for nested branches.
   static const levelIndent = 28.0;
-  static const entryGap = 8.0;
+  /// Vertical space between sibling cards in the same branch.
+  static const cardSpacing = 14.0;
 
   static const teal500 = Color(0xFF14B8A6);
   static const teal600 = Color(0xFF0D9488);

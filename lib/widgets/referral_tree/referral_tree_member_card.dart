@@ -19,6 +19,29 @@ class ReferralTreeMemberCard extends StatelessWidget {
   final VoidCallback? onToggleExpand;
   final VoidCallback? onViewDownline;
 
+  static List<BoxShadow> get _cardShadow => [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.1),
+          blurRadius: 14,
+          offset: const Offset(0, 4),
+          spreadRadius: 0,
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.05),
+          blurRadius: 4,
+          offset: const Offset(0, 1),
+        ),
+      ];
+
+  static List<BoxShadow> get _rootCardShadow => [
+        ..._cardShadow,
+        BoxShadow(
+          color: ReferralTreeStyle.teal500.withValues(alpha: 0.2),
+          blurRadius: 12,
+          offset: const Offset(0, 3),
+        ),
+      ];
+
   @override
   Widget build(BuildContext context) {
     final memberType = node['member_type']?.toString() ?? 'free';
@@ -33,186 +56,168 @@ class ReferralTreeMemberCard extends StatelessWidget {
         (node['name']?.toString().isNotEmpty == true ? node['name'].toString()[0].toUpperCase() : '?');
     final accentColor = isActive ? ReferralTreeStyle.teal500 : Colors.grey.shade400;
 
-    final card = Material(
-      elevation: isCurrentRoot ? 3 : 1.5,
-      shadowColor: Colors.black.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(10),
-      color: Colors.white,
-      child: InkWell(
-        onTap: isCurrentRoot ? null : onCardTap,
+    return DecoratedBox(
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isCurrentRoot ? ReferralTreeStyle.teal500 : Colors.grey.shade200,
-              width: isCurrentRoot ? 1.5 : 1,
-            ),
-            gradient: isActive
-                ? const LinearGradient(
-                    colors: [Colors.white, ReferralTreeStyle.teal50],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : null,
-            color: isActive ? null : const Color(0xFFF9FAFB),
-          ),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  width: 5,
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(10)),
-                  ),
+        boxShadow: isCurrentRoot ? _rootCardShadow : _cardShadow,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: isCurrentRoot ? null : onCardTap,
+            child: Ink(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isCurrentRoot ? ReferralTreeStyle.teal500 : Colors.grey.shade200,
+                  width: isCurrentRoot ? 1.5 : 1,
                 ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: avatarColors,
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            border: Border.all(color: Colors.white, width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: avatarColors.first.withValues(alpha: 0.35),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
+                gradient: isActive
+                    ? const LinearGradient(
+                        colors: [Colors.white, ReferralTreeStyle.teal50],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      )
+                    : null,
+                color: isActive ? null : Colors.white,
+              ),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(width: 4, color: accentColor),
+                    Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 6, 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: avatarColors,
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
-                            ],
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            avatarInitial,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                              border: Border.all(color: Colors.white, width: 1.5),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              avatarInitial,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      node['name']?.toString() ?? 'Unknown',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 15,
-                                        color: Color(0xFF111827),
-                                        height: 1.2,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  if (hasChildren)
-                                    Container(
-                                      margin: const EdgeInsets.only(left: 6),
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(color: Colors.grey.shade200),
-                                      ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
                                       child: Text(
+                                        node['name']?.toString() ?? 'Unknown',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                          color: Color(0xFF111827),
+                                          height: 1.15,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (hasChildren) ...[
+                                      const SizedBox(width: 4),
+                                      Text(
                                         '${children.length} ref${children.length == 1 ? '' : 's'}',
                                         style: TextStyle(
-                                          fontSize: 10,
+                                          fontSize: 9,
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.grey.shade600,
+                                          color: Colors.grey.shade500,
                                         ),
                                       ),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 4,
-                                children: [
-                                  _StatusChip(label: isPaid ? 'Paid' : 'Free', isPaid: isPaid),
-                                  if (badge != null) _RankChip(name: badge['name']?.toString() ?? ''),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              _ContactBlock(
-                                email: node['email']?.toString().isNotEmpty == true
-                                    ? node['email'].toString()
-                                    : 'No email',
-                                phone: node['phone']?.toString().isNotEmpty == true
-                                    ? node['phone'].toString()
-                                    : 'No phone',
-                              ),
+                                    ],
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Wrap(
+                                  spacing: 4,
+                                  runSpacing: 2,
+                                  children: [
+                                    _StatusChip(label: isPaid ? 'Paid' : 'Free', isPaid: isPaid),
+                                    if (badge != null)
+                                      Text(
+                                        badge['name']?.toString() ?? '',
+                                        style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                _InfoRow(
+                                  icon: Icons.email_outlined,
+                                  text: node['email']?.toString().isNotEmpty == true
+                                      ? node['email'].toString()
+                                      : 'No email',
+                                ),
+                                _InfoRow(
+                                  icon: Icons.phone_outlined,
+                                  text: node['phone']?.toString().isNotEmpty == true
+                                      ? node['phone'].toString()
+                                      : 'No phone',
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (hasMoreLevels)
+                                _CircleActionButton(
+                                  size: 26,
+                                  color: const Color(0xFFFACC15),
+                                  onTap: onViewDownline,
+                                  child: const Icon(Icons.arrow_downward, size: 13, color: Colors.white),
+                                ),
+                              if (hasChildren) ...[
+                                if (hasMoreLevels) const SizedBox(height: 4),
+                                _CircleActionButton(
+                                  size: 26,
+                                  color: Colors.white,
+                                  borderColor: Colors.grey.shade300,
+                                  onTap: onToggleExpand,
+                                  child: Icon(
+                                    isExpanded ? Icons.remove : Icons.add,
+                                    size: 16,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        Column(
-                          children: [
-                            if (hasMoreLevels)
-                              _CircleActionButton(
-                                color: const Color(0xFFFACC15),
-                                onTap: onViewDownline,
-                                child: const Icon(Icons.arrow_downward, size: 14, color: Colors.white),
-                              ),
-                            if (hasChildren) ...[
-                              if (hasMoreLevels) const SizedBox(height: 6),
-                              _CircleActionButton(
-                                color: Colors.white,
-                                borderColor: Colors.grey.shade300,
-                                onTap: onToggleExpand,
-                                child: Icon(
-                                  isExpanded ? Icons.remove : Icons.add,
-                                  size: 18,
-                                  color: Colors.grey.shade700,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    );
-
-    if (!isCurrentRoot) return card;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: ReferralTreeStyle.teal500.withValues(alpha: 0.25),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: card,
     );
   }
 }
@@ -226,76 +231,21 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: isPaid ? ReferralTreeStyle.teal50 : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: isPaid ? ReferralTreeStyle.teal500.withValues(alpha: 0.35) : Colors.grey.shade300,
+          color: isPaid ? ReferralTreeStyle.teal500.withValues(alpha: 0.3) : Colors.grey.shade300,
         ),
       ),
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 11,
+          fontSize: 9,
           fontWeight: FontWeight.w700,
           color: isPaid ? ReferralTreeStyle.teal700 : Colors.grey.shade700,
         ),
-      ),
-    );
-  }
-}
-
-class _RankChip extends StatelessWidget {
-  const _RankChip({required this.name});
-
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.landscape_outlined, size: 12, color: Colors.grey.shade600),
-          const SizedBox(width: 4),
-          Text(
-            name,
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.grey.shade700),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ContactBlock extends StatelessWidget {
-  const _ContactBlock({required this.email, required this.phone});
-
-  final String email;
-  final String phone;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.grey.shade100),
-      ),
-      child: Column(
-        children: [
-          _InfoRow(icon: Icons.email_outlined, text: email),
-          const SizedBox(height: 4),
-          _InfoRow(icon: Icons.phone_outlined, text: phone),
-        ],
       ),
     );
   }
@@ -309,19 +259,22 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: Colors.grey.shade500),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade700, height: 1.25),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+    return Padding(
+      padding: const EdgeInsets.only(top: 1),
+      child: Row(
+        children: [
+          Icon(icon, size: 11, color: Colors.grey.shade400),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 10, color: Colors.grey.shade600, height: 1.2),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -330,12 +283,14 @@ class _CircleActionButton extends StatelessWidget {
   const _CircleActionButton({
     required this.child,
     required this.onTap,
+    required this.size,
     this.color,
     this.borderColor,
   });
 
   final Widget child;
   final VoidCallback? onTap;
+  final double size;
   final Color? color;
   final Color? borderColor;
 
@@ -344,13 +299,14 @@ class _CircleActionButton extends StatelessWidget {
     return Material(
       color: color ?? Colors.transparent,
       shape: const CircleBorder(),
-      elevation: 0.5,
+      elevation: 1,
+      shadowColor: Colors.black26,
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,
         child: Container(
-          width: 30,
-          height: 30,
+          width: size,
+          height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: color,

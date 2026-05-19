@@ -118,7 +118,7 @@ class _TreeRootNode extends StatelessWidget {
           onNavigate: onNavigate,
         ),
         if (showChildren) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: ReferralTreeStyle.cardSpacing),
           OrgChartBranch(
             children: children,
             drawParentStub: true,
@@ -162,18 +162,20 @@ class _BranchChildEntry extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        KeyedSubtree(
-          key: cardKey,
-          child: _MemberCard(
-            node: node,
-            currentRootUserId: currentRootUserId,
-            isExpanded: isExpanded,
-            onToggle: onToggle,
-            onNavigate: onNavigate,
+        Padding(
+          padding: const EdgeInsets.only(bottom: ReferralTreeStyle.cardSpacing),
+          child: KeyedSubtree(
+            key: cardKey,
+            child: _MemberCard(
+              node: node,
+              currentRootUserId: currentRootUserId,
+              isExpanded: isExpanded,
+              onToggle: onToggle,
+              onNavigate: onNavigate,
+            ),
           ),
         ),
         if (showChildren) ...[
-          const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.only(left: ReferralTreeStyle.levelIndent),
             child: OrgChartBranch(
@@ -185,8 +187,7 @@ class _BranchChildEntry extends StatelessWidget {
               onNavigate: onNavigate,
             ),
           ),
-        ] else
-          const SizedBox(height: ReferralTreeStyle.entryGap),
+        ],
       ],
     );
   }
