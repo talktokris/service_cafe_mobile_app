@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:serve_cafe_mobile/core/theme/app_decorations.dart';
 import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
 
 class SummaryStatRow extends StatelessWidget {
@@ -11,7 +12,7 @@ class SummaryStatRow extends StatelessWidget {
     return Row(
       children: [
         for (var i = 0; i < stats.length; i++) ...[
-          if (i > 0) const SizedBox(width: 8),
+          if (i > 0) const SizedBox(width: 10),
           Expanded(child: _StatCard(stat: stats[i])),
         ],
       ],
@@ -34,21 +35,24 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = stat.color ?? AppColors.primary;
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+      decoration: AppDecorations.tintedCard(accent.withValues(alpha: 0.08)),
       child: Column(
         children: [
-          Text(stat.label, style: const TextStyle(fontSize: 10, color: AppColors.textMuted), textAlign: TextAlign.center),
-          const SizedBox(height: 4),
+          Text(
+            stat.label,
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: accent.withValues(alpha: 0.85)),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
           Text(
             stat.value,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: stat.color ?? AppColors.primary),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: accent, letterSpacing: -0.2),
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

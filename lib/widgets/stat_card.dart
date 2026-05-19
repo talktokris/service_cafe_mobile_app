@@ -1,28 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:serve_cafe_mobile/core/theme/app_decorations.dart';
 import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
 
 class StatCard extends StatelessWidget {
-  const StatCard({super.key, required this.label, required this.value, this.icon});
+  const StatCard({
+    super.key,
+    required this.label,
+    required this.value,
+    this.icon,
+    this.accentColor,
+  });
 
   final String label;
   final String value;
   final IconData? icon;
+  final Color? accentColor;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (icon != null) Icon(icon, color: AppColors.accent, size: 28),
-            const SizedBox(height: 8),
-            Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
-            const SizedBox(height: 4),
-            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primary)),
-          ],
-        ),
+    final accent = accentColor ?? AppColors.accent;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: AppDecorations.premiumCard(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (icon != null)
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [accent.withValues(alpha: 0.15), accent.withValues(alpha: 0.05)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: accent, size: 22),
+            ),
+          const Spacer(),
+          Text(
+            label,
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+              color: AppColors.textPrimary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }

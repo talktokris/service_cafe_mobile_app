@@ -10,3 +10,12 @@ String formatDate(String? iso) {
     return iso;
   }
 }
+
+String formatDateTime(String? iso) {
+  if (iso == null || iso.isEmpty) return '-';
+  try {
+    return DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.parse(iso));
+  } catch (_) {
+    return iso;
+  }
+}

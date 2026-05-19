@@ -4,6 +4,7 @@ import 'package:serve_cafe_mobile/core/api/api_client.dart';
 import 'package:serve_cafe_mobile/core/api/api_endpoints.dart';
 import 'package:serve_cafe_mobile/core/auth/auth_provider.dart';
 import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
+import 'package:serve_cafe_mobile/utils/transaction_helpers.dart';
 import 'package:serve_cafe_mobile/widgets/error_state.dart';
 import 'package:serve_cafe_mobile/widgets/gradient_app_bar.dart';
 import 'package:serve_cafe_mobile/widgets/loading_overlay.dart';
@@ -17,18 +18,19 @@ class BadgesScreen extends StatefulWidget {
 }
 
 class _BadgesScreenState extends State<BadgesScreen> {
-  List<dynamic> _levels = [];
+  Map<String, bool> _unlocked = {};
   Map<String, dynamic>? _memberRank;
   bool _loading = true;
   String? _error;
 
+  /// API keys mapped to display names (web parity).
   static const _badgeMeta = [
-    ('annapurna', 'Annapurna', 'Active Paid Member', Colors.blue),
-    ('manaslu', 'Manaslu', 'Leadership Achievement', Colors.green),
-    ('dhaulagiri', 'Dhaulagiri', 'Advanced Achievement', Colors.amber),
-    ('cho_oyu', 'Makalu', 'Expert Achievement', Colors.purple),
-    ('makalu', 'Kanchenjunga', 'Master Achievement', Colors.red),
-    ('kanchenjunga', 'Mount Everest', 'Elite Achievement', Colors.indigo),
+    _BadgeMeta('annapurna', 'Annapurna', 'A', 'Active Paid Member — become an active paid member', Colors.blue),
+    _BadgeMeta('manaslu', 'Manaslu', 'M', 'Leadership Achievement — build your leadership network', Colors.green),
+    _BadgeMeta('dhaulagiri', 'Dhaulagiri', 'D', 'Advanced Achievement — reach advanced rank milestones', Colors.amber),
+    _BadgeMeta('cho_oyu', 'Makalu', 'M', 'Expert Achievement — qualify as a Seven Star leader', Colors.purple),
+    _BadgeMeta('makalu', 'Kanchenjunga', 'K', 'Master Achievement — achieve Mega Star status', Colors.red),
+    _BadgeMeta('kanchenjunga', 'Mount Everest', 'E', 'Elite Achievement — reach Giga Star rank', Colors.indigo),
   ];
 
   @override
@@ -47,8 +49,14 @@ class _BadgesScreenState extends State<BadgesScreen> {
       final body = await context.read<ApiClient>().get(ApiEndpoints.badges);
       final data = body['data'] as Map<String, dynamic>;
       if (mounted) {
+        final levels = data['levels'] as List<dynamic>? ?? [];
+        final map = <String, bool>{};
+        for (final l in levels) {
+          final m = l as Map<String, dynamic>;
+          map[m['key']?.toString() ?? ''] = m['unlocked'] == true;
+        }
         setState(() {
-          _levels = data['levels'] as List<dynamic>? ?? [];
+          _unlocked = map;
           _memberRank = data['member_rank'] as Map<String, dynamic>?;
         });
       }
@@ -59,15 +67,7 @@ class _BadgesScreenState extends State<BadgesScreen> {
     }
   }
 
-  bool _isUnlocked(String key) {
-    for (final l in _levels) {
-      final m = l as Map<String, dynamic>;
-      if (m['key'] == key) return m['unlocked'] == true;
-    }
-    return false;
-  }
-
-  int get _unlockedCount => _badgeMeta.where((m) => _isUnlocked(m.$1)).length;
+  int get _unlockedCount => _badgeMeta.where((m) => _unlocked[m.apiKey] == true).length;
 
   @override
   Widget build(BuildContext context) {
@@ -98,13 +98,14 @@ class _BadgesScreenState extends State<BadgesScreen> {
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.85),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.72,
+                        ),
                         itemCount: _badgeMeta.length,
-                        itemBuilder: (_, i) {
-                          final meta = _badgeMeta[i];
-                          final unlocked = _isUnlocked(meta.$1);
-                          return _badgeCard(meta.$2, meta.$3, unlocked, meta.$4);
-                        },
+                        itemBuilder: (_, i) => _badgeCard(_badgeMeta[i]),
                       ),
                       const SizedBox(height: 24),
                       const Text('Upline Badges', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
@@ -144,7 +145,9 @@ class _BadgesScreenState extends State<BadgesScreen> {
     );
   }
 
-  Widget _badgeCard(String name, String desc, bool unlocked, MaterialColor color) {
+  Widget _badgeCard(_BadgeMeta meta) {
+    final unlocked = _unlocked[meta.apiKey] == true;
+    final color = meta.color;
     return Card(
       elevation: unlocked ? 3 : 0,
       color: unlocked ? color.shade50 : Colors.grey.shade100,
@@ -153,18 +156,40 @@ class _BadgesScreenState extends State<BadgesScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(unlocked ? Icons.emoji_events : Icons.lock, size: 36, color: unlocked ? color.shade700 : Colors.grey),
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: unlocked ? color.shade700 : Colors.grey,
+              child: Text(meta.initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+            ),
             const SizedBox(height: 8),
-            Text(name, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, color: unlocked ? color.shade900 : Colors.grey)),
-            Text(desc, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+            Text(meta.displayName, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, color: unlocked ? color.shade900 : Colors.grey)),
+            const SizedBox(height: 4),
+            Text(
+              meta.requirement,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 9, color: AppColors.textMuted),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(unlocked ? '✓ Unlocked' : '🔒 Locked', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: unlocked ? Colors.green.shade700 : Colors.grey)),
           ],
         ),
       ),
     );
   }
 
+  String _userName(Map<String, dynamic>? user) {
+    if (user == null) return 'Not Available';
+    final first = user['first_name']?.toString() ?? '';
+    final last = user['last_name']?.toString() ?? '';
+    final full = '$first $last'.trim();
+    if (full.isNotEmpty) return full;
+    return user['name']?.toString() ?? 'Not Available';
+  }
+
   List<Widget> _uplineTiles() {
-    final ranks = [
+    const ranks = [
       ('Annapurna', 'referral_user'),
       ('Manaslu', 'three_star_user'),
       ('Dhaulagiri', 'five_star_user'),
@@ -174,15 +199,29 @@ class _BadgesScreenState extends State<BadgesScreen> {
     ];
     return ranks.map((r) {
       final user = _memberRank![r.$2] as Map<String, dynamic>?;
-      final name = user != null ? (user['name'] ?? '${user['first_name'] ?? ''} ${user['last_name'] ?? ''}'.trim()) : 'Not Available';
+      final name = _userName(user);
+      final initials = name == 'Not Available' ? '?' : initialsFromName(name);
       return Card(
         margin: const EdgeInsets.only(bottom: 8),
         child: ListTile(
-          leading: CircleAvatar(backgroundColor: AppColors.primary.withValues(alpha: 0.1), child: Text(r.$1[0], style: const TextStyle(color: AppColors.primary))),
+          leading: CircleAvatar(
+            backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+            child: Text(initials, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12)),
+          ),
           title: Text(r.$1),
-          subtitle: Text(name.toString().isEmpty ? 'Not Available' : name.toString()),
+          subtitle: Text(name),
         ),
       );
     }).toList();
   }
+}
+
+class _BadgeMeta {
+  const _BadgeMeta(this.apiKey, this.displayName, this.initial, this.requirement, this.color);
+
+  final String apiKey;
+  final String displayName;
+  final String initial;
+  final String requirement;
+  final MaterialColor color;
 }

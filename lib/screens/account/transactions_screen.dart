@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:serve_cafe_mobile/core/api/api_client.dart';
 import 'package:serve_cafe_mobile/core/api/api_endpoints.dart';
 import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
 import 'package:serve_cafe_mobile/utils/format.dart';
+import 'package:serve_cafe_mobile/utils/transaction_helpers.dart';
+import 'package:serve_cafe_mobile/widgets/date_filter_bar.dart';
 import 'package:serve_cafe_mobile/widgets/debit_credit_chip.dart';
 import 'package:serve_cafe_mobile/widgets/empty_state.dart';
 import 'package:serve_cafe_mobile/widgets/error_state.dart';
@@ -21,6 +24,7 @@ class TransactionsScreen extends StatefulWidget {
 
 class _TransactionsScreenState extends State<TransactionsScreen> {
   final _txId = TextEditingController();
+  List<dynamic> _allItems = [];
   List<dynamic> _items = [];
   Map<String, dynamic>? _summary;
   double _walletBalance = 0;
@@ -28,13 +32,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   String? _error;
   DateTime? _from;
   DateTime? _to;
+  String _natureFilter = '';
 
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
-    _from = DateTime(now.year, now.month, 1);
-    _to = DateTime(now.year, now.month + 1, 0);
+    _from = monthStart(now);
+    _to = monthEnd(now);
     _load();
   }
 
@@ -42,6 +47,32 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   void dispose() {
     _txId.dispose();
     super.dispose();
+  }
+
+  void _applyNatureFilter() {
+    if (_natureFilter.isEmpty) {
+      _items = List.from(_allItems);
+    } else {
+      _items = _allItems.where((e) {
+        final m = e as Map<String, dynamic>;
+        final nature = m['transaction_nature']?.toString() ?? '';
+        final type = m['transaction_type']?.toString() ?? '';
+        return nature == _natureFilter || type == _natureFilter;
+      }).toList();
+    }
+  }
+
+  List<FilterDropdownOption> _natureOptions() {
+    final set = <String>{};
+    for (final e in _allItems) {
+      final m = e as Map<String, dynamic>;
+      final nature = m['transaction_nature']?.toString();
+      if (nature != null && nature.isNotEmpty) set.add(nature);
+    }
+    return [
+      const FilterDropdownOption(value: '', label: 'All Types'),
+      ...set.map((n) => FilterDropdownOption(value: n, label: n)),
+    ];
   }
 
   Future<void> _load() async {
@@ -56,9 +87,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       final data = body['data'] as Map<String, dynamic>;
       if (mounted) {
         setState(() {
-          _items = data['transactions'] as List<dynamic>? ?? [];
+          _allItems = data['transactions'] as List<dynamic>? ?? [];
           _summary = data['summary'] as Map<String, dynamic>?;
           _walletBalance = (data['wallet_balance'] as num?)?.toDouble() ?? 0;
+          _applyNatureFilter();
         });
       }
     } catch (e) {
@@ -71,8 +103,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   void _reset() {
     final now = DateTime.now();
     _txId.clear();
-    _from = DateTime(now.year, now.month, 1);
-    _to = DateTime(now.year, now.month + 1, 0);
+    _from = monthStart(now);
+    _to = monthEnd(now);
+    setState(() => _natureFilter = '');
     _load();
   }
 
@@ -108,22 +141,24 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           SummaryStat(label: 'Balance', value: formatNrs(_summary!['balance'] ?? 0)),
                         ]),
                       const SizedBox(height: 16),
-                      TextField(controller: _txId, decoration: const InputDecoration(labelText: 'Transaction ID', isDense: true)),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(child: OutlinedButton(onPressed: () => _pickDate(true), child: Text(_from != null ? DateFormat('dd/MM/yy').format(_from!) : 'From'))),
-                          const SizedBox(width: 8),
-                          Expanded(child: OutlinedButton(onPressed: () => _pickDate(false), child: Text(_to != null ? DateFormat('dd/MM/yy').format(_to!) : 'To'))),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(child: ElevatedButton(onPressed: _load, child: const Text('Search'))),
-                          const SizedBox(width: 8),
-                          Expanded(child: OutlinedButton(onPressed: _reset, child: const Text('Reset'))),
-                        ],
+                      DateFilterBar(
+                        textField: _txId,
+                        textFieldLabel: 'Transaction ID',
+                        from: _from,
+                        to: _to,
+                        onPickFrom: () => _pickDate(true),
+                        onPickTo: () => _pickDate(false),
+                        onSearch: _load,
+                        onReset: _reset,
+                        dropdownValue: _natureFilter,
+                        dropdownLabel: 'Type / Nature',
+                        dropdownOptions: _natureOptions(),
+                        onDropdownChanged: (v) {
+                          setState(() {
+                            _natureFilter = v ?? '';
+                            _applyNatureFilter();
+                          });
+                        },
                       ),
                       const SizedBox(height: 16),
                       if (_items.isEmpty)
@@ -132,6 +167,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         ..._items.map((e) {
                           final m = e as Map<String, dynamic>;
                           final dc = (m['debit_credit'] as num?)?.toInt() ?? 0;
+                          final orderId = m['order_id'];
                           return Card(
                             margin: const EdgeInsets.only(bottom: 8),
                             child: Padding(
@@ -143,13 +179,23 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                     children: [
                                       DebitCreditChip(debitCredit: dc),
                                       const Spacer(),
-                                      Text(formatNrs(m['amount'] ?? 0), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                      Text(
+                                        formatNrs(m['amount'] ?? 0),
+                                        style: TextStyle(fontWeight: FontWeight.bold, color: debitCreditAmountColor(dc)),
+                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 6),
                                   Text('${m['transaction_nature'] ?? ''} · ${m['transaction_type'] ?? ''}', style: const TextStyle(fontSize: 13)),
                                   Text('ID #${m['id']} · ${formatDate(m['created_at']?.toString())}', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-                                  if (m['order_id'] != null) Text('Order #${m['order_id']}', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                                  if (orderId != null)
+                                    InkWell(
+                                      onTap: () => context.push('/orders/$orderId'),
+                                      child: Text(
+                                        'Order #$orderId',
+                                        style: const TextStyle(fontSize: 12, color: AppColors.accent, decoration: TextDecoration.underline),
+                                      ),
+                                    ),
                                   if (m['balance'] != null)
                                     Text('Balance: ${formatNrs(m['balance'])}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
                                 ],
