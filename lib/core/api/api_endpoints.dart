@@ -1,0 +1,26 @@
+class ApiEndpoints {
+  static const login = '/auth/login';
+  static const logout = '/auth/logout';
+  static const me = '/auth/me';
+  static const validateReferral = '/auth/referral';
+  static const register = '/auth/register';
+  static const forgotPassword = '/auth/forgot-password';
+  static const resetPassword = '/auth/reset-password';
+  static const dashboard = '/dashboard';
+  static const orders = '/orders';
+  static String order(int id) => '/orders/$id';
+  static const transactions = '/transactions';
+  static const earnings = '/earnings';
+  static const earningsWithdraw = '/earnings/withdraw';
+  static const cashWallet = '/cash-wallet';
+  static const cashWalletCashOut = '/cash-wallet/cash-out';
+  static const cashWalletTransfer = '/cash-wallet/transfer';
+  static const badges = '/badges';
+  static const referral = '/referral';
+  static const support = '/support';
+  static const treeView = '/tree-view';
+  static const treeViewChildren = '/tree-view/children';
+  static const profile = '/profile';
+  static const profilePassword = '/profile/password';
+  static const profileReferral = '/profile/referral';
+}
