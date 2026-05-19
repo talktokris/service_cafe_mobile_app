@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:serve_cafe_mobile/widgets/referral_tree/referral_tree_constants.dart';
 import 'package:serve_cafe_mobile/widgets/referral_tree/referral_tree_member_card.dart';
+import 'package:serve_cafe_mobile/widgets/referral_tree/referral_tree_org_painter.dart';
 
-/// Hierarchical referral tree with connector lines (web parity).
+/// Hierarchical referral tree with measured org-chart connector lines.
 class ReferralTreeWidget extends StatefulWidget {
   const ReferralTreeWidget({
     super.key,
@@ -83,7 +84,6 @@ class _ReferralTreeWidgetState extends State<ReferralTreeWidget> {
   }
 }
 
-/// Root node: card only, then children branch (no horizontal connector on root).
 class _TreeRootNode extends StatelessWidget {
   const _TreeRootNode({
     required this.node,
@@ -117,32 +117,35 @@ class _TreeRootNode extends StatelessWidget {
           onToggle: onToggle,
           onNavigate: onNavigate,
         ),
-        if (showChildren)
-          _ChildrenBranch(
+        if (showChildren) ...[
+          const SizedBox(height: 4),
+          OrgChartBranch(
             children: children,
+            drawParentStub: true,
             currentRootUserId: currentRootUserId,
             expandedNodes: expandedNodes,
             onToggle: onToggle,
             onNavigate: onNavigate,
           ),
+        ],
       ],
     );
   }
 }
 
-/// One child inside a branch: horizontal connector on card only; nested branch is a sibling below.
+/// One child row: card (measured) + optional nested branch.
 class _BranchChildEntry extends StatelessWidget {
   const _BranchChildEntry({
+    required this.cardKey,
     required this.node,
-    required this.isLastSibling,
     required this.currentRootUserId,
     required this.expandedNodes,
     required this.onToggle,
     required this.onNavigate,
   });
 
+  final GlobalKey cardKey;
   final Map<String, dynamic> node;
-  final bool isLastSibling;
   final int currentRootUserId;
   final Set<int> expandedNodes;
   final ValueChanged<int> onToggle;
@@ -156,14 +159,11 @@ class _BranchChildEntry extends StatelessWidget {
     final isExpanded = expandedNodes.contains(nodeId);
     final showChildren = hasChildren && isExpanded;
 
-    // Mask spine only on this card row when last sibling with no expanded downline here.
-    final maskSpineOnCard = isLastSibling && !showChildren;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _HorizontalConnectorRow(
-          maskSpineBelowCard: maskSpineOnCard,
+        KeyedSubtree(
+          key: cardKey,
           child: _MemberCard(
             node: node,
             currentRootUserId: currentRootUserId,
@@ -172,14 +172,21 @@ class _BranchChildEntry extends StatelessWidget {
             onNavigate: onNavigate,
           ),
         ),
-        if (showChildren)
-          _ChildrenBranch(
-            children: children,
-            currentRootUserId: currentRootUserId,
-            expandedNodes: expandedNodes,
-            onToggle: onToggle,
-            onNavigate: onNavigate,
+        if (showChildren) ...[
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: ReferralTreeStyle.levelIndent),
+            child: OrgChartBranch(
+              children: children,
+              drawParentStub: true,
+              currentRootUserId: currentRootUserId,
+              expandedNodes: expandedNodes,
+              onToggle: onToggle,
+              onNavigate: onNavigate,
+            ),
           ),
+        ] else
+          const SizedBox(height: ReferralTreeStyle.entryGap),
       ],
     );
   }
@@ -219,10 +226,12 @@ class _MemberCard extends StatelessWidget {
   }
 }
 
-/// Continuous left spine + horizontal branch per child (matches web CSS tree).
-class _ChildrenBranch extends StatelessWidget {
-  const _ChildrenBranch({
+/// Branch of siblings with lines painted from measured card positions.
+class OrgChartBranch extends StatefulWidget {
+  const OrgChartBranch({
+    super.key,
     required this.children,
+    required this.drawParentStub,
     required this.currentRootUserId,
     required this.expandedNodes,
     required this.onToggle,
@@ -230,130 +239,116 @@ class _ChildrenBranch extends StatelessWidget {
   });
 
   final List<dynamic> children;
+  final bool drawParentStub;
   final int currentRootUserId;
   final Set<int> expandedNodes;
   final ValueChanged<int> onToggle;
   final ValueChanged<int> onNavigate;
 
   @override
+  State<OrgChartBranch> createState() => _OrgChartBranchState();
+}
+
+class _OrgChartBranchState extends State<OrgChartBranch> {
+  final GlobalKey _stackKey = GlobalKey();
+  late List<GlobalKey> _cardKeys;
+  late List<GlobalKey> _entryKeys;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncKeys();
+    WidgetsBinding.instance.addPostFrameCallback(_repaint);
+  }
+
+  @override
+  void didUpdateWidget(covariant OrgChartBranch oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.children.length != widget.children.length) {
+      _syncKeys();
+    }
+    WidgetsBinding.instance.addPostFrameCallback(_repaint);
+  }
+
+  void _syncKeys() {
+    final n = widget.children.length;
+    _cardKeys = List.generate(n, (_) => GlobalKey());
+    _entryKeys = List.generate(n, (_) => GlobalKey());
+  }
+
+  void _repaint(_) {
+    if (mounted) setState(() {});
+  }
+
+  List<OrgNodeAnchor> _measureAnchors() {
+    final stackBox = _stackKey.currentContext?.findRenderObject() as RenderBox?;
+    if (stackBox == null) return [];
+
+    final anchors = <OrgNodeAnchor>[];
+    for (var i = 0; i < widget.children.length; i++) {
+      final cardBox = _cardKeys[i].currentContext?.findRenderObject() as RenderBox?;
+      final entryBox = _entryKeys[i].currentContext?.findRenderObject() as RenderBox?;
+      if (cardBox == null || entryBox == null) continue;
+
+      final cardOrigin = stackBox.globalToLocal(cardBox.localToGlobal(Offset.zero));
+      final entryBottomLocal = stackBox.globalToLocal(
+        entryBox.localToGlobal(Offset(0, entryBox.size.height)),
+      );
+
+      final node = widget.children[i] as Map<String, dynamic>;
+      final nodeId = node['id'] as int;
+      final childList = (node['children'] as List<dynamic>?) ?? [];
+      final hasChildren = childList.isNotEmpty;
+      final isExpanded = widget.expandedNodes.contains(nodeId);
+
+      anchors.add(OrgNodeAnchor(
+        centerY: cardOrigin.dy + cardBox.size.height / 2,
+        cardLeftX: cardOrigin.dx,
+        entryBottomY: entryBottomLocal.dy,
+        isLast: i == widget.children.length - 1,
+        hasExpandedChildren: hasChildren && isExpanded,
+      ));
+    }
+    return anchors;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final anchors = _measureAnchors();
+
     return Stack(
+      key: _stackKey,
       clipBehavior: Clip.none,
       children: [
-        Positioned(
-          left: ReferralTreeStyle.spineX,
-          top: -ReferralTreeStyle.parentStubH,
-          child: const _VerticalLineSegment(height: ReferralTreeStyle.parentStubH),
+        Positioned.fill(
+          child: CustomPaint(
+            painter: OrgChartBranchPainter(
+              anchors: anchors,
+              drawParentStub: widget.drawParentStub,
+            ),
+          ),
         ),
-        Transform.translate(
-          offset: const Offset(0, -2),
-          child: Padding(
-            padding: const EdgeInsets.only(left: ReferralTreeStyle.spineX),
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(
-                    color: ReferralTreeStyle.lineColor,
-                    width: ReferralTreeStyle.lineWidth,
+        Padding(
+          padding: const EdgeInsets.only(left: ReferralTreeStyle.gutterW),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < widget.children.length; i++)
+                KeyedSubtree(
+                  key: _entryKeys[i],
+                  child: _BranchChildEntry(
+                    cardKey: _cardKeys[i],
+                    node: widget.children[i] as Map<String, dynamic>,
+                    currentRootUserId: widget.currentRootUserId,
+                    expandedNodes: widget.expandedNodes,
+                    onToggle: widget.onToggle,
+                    onNavigate: widget.onNavigate,
                   ),
                 ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(left: ReferralTreeStyle.branchW),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (var i = 0; i < children.length; i++)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: _BranchChildEntry(
-                          node: children[i] as Map<String, dynamic>,
-                          isLastSibling: i == children.length - 1,
-                          currentRootUserId: currentRootUserId,
-                          expandedNodes: expandedNodes,
-                          onToggle: onToggle,
-                          onNavigate: onNavigate,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
+            ],
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Horizontal branch to card; optional mask stops parent spine at last leaf card only.
-class _HorizontalConnectorRow extends StatelessWidget {
-  const _HorizontalConnectorRow({
-    required this.child,
-    this.maskSpineBelowCard = false,
-  });
-
-  final Widget child;
-  final bool maskSpineBelowCard;
-
-  @override
-  Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: -ReferralTreeStyle.branchW,
-            width: ReferralTreeStyle.branchW,
-            top: 0,
-            bottom: 0,
-            child: Center(
-              child: Container(
-                width: ReferralTreeStyle.branchW,
-                height: ReferralTreeStyle.lineWidth,
-                color: ReferralTreeStyle.lineColor,
-              ),
-            ),
-          ),
-          if (maskSpineBelowCard)
-            Positioned(
-              left: -(ReferralTreeStyle.branchW + ReferralTreeStyle.lineWidth),
-              top: 0,
-              bottom: 0,
-              width: ReferralTreeStyle.lineWidth + 2,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final h = constraints.maxHeight;
-                  if (!h.isFinite || h <= 0) return const SizedBox.shrink();
-                  return Column(
-                    children: [
-                      SizedBox(height: h / 2),
-                      Expanded(
-                        child: const ColoredBox(color: ReferralTreeStyle.panelBg),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _VerticalLineSegment extends StatelessWidget {
-  const _VerticalLineSegment({required this.height});
-
-  final double height;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: ReferralTreeStyle.lineWidth,
-      height: height,
-      child: const ColoredBox(color: ReferralTreeStyle.lineColor),
     );
   }
 }

@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 
-/// Visual constants aligned with web `TreeViewMember.jsx`.
 class ReferralTreeStyle {
-  static const lineColor = Color(0xFF9CA3AF);
+  static const lineColor = Color(0xFF64748B);
   static const panelBg = Color(0xFFFAFAFA);
   static const lineWidth = 2.0;
-  static const spineX = 12.0;
-  static const branchW = 20.0;
-  static const parentStubH = 8.0;
+
+  /// Width reserved for connector gutter (left of cards).
+  static const gutterW = 28.0;
+  /// X position of vertical spine within the branch stack.
+  static const spineX = 13.0;
+  static const parentStubH = 14.0;
+  /// Indent per tree level for nested branches.
+  static const levelIndent = 28.0;
+  static const entryGap = 8.0;
 
   static const teal500 = Color(0xFF14B8A6);
+  static const teal600 = Color(0xFF0D9488);
   static const teal700 = Color(0xFF0F766E);
   static const cyan50 = Color(0xFFECFEFF);
   static const teal50 = Color(0xFFF0FDFA);
@@ -37,13 +43,13 @@ class BadgeRankStyle {
   static List<Color> colorsForBadge(Map<String, dynamic>? badge, {required bool isActive}) {
     if (badge == null) {
       return isActive
-          ? [ReferralTreeStyle.teal500, Color(0xFF06B6D4)]
+          ? [ReferralTreeStyle.teal500, ReferralTreeStyle.teal600]
           : [Color(0xFFD1D5DB), Color(0xFF9CA3AF)];
     }
     final name = badge['name']?.toString() ?? '';
     for (final r in ranks) {
       if (r.name == name) return r.colors;
     }
-    return [ReferralTreeStyle.teal500, Color(0xFF06B6D4)];
+    return [ReferralTreeStyle.teal500, ReferralTreeStyle.teal600];
   }
 }
