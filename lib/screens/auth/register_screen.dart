@@ -6,6 +6,7 @@ import 'package:serve_cafe_mobile/core/api/api_client.dart';
 import 'package:serve_cafe_mobile/core/api/api_endpoints.dart';
 import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
 import 'package:serve_cafe_mobile/widgets/auth_scaffold.dart';
+import 'package:serve_cafe_mobile/widgets/terms_of_use_modal.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key, this.initialReferralCode});
@@ -32,6 +33,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _success;
   bool _obscure1 = true;
   bool _obscure2 = true;
+  bool _termsAccepted = false;
 
   @override
   void initState() {
@@ -80,6 +82,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _error = 'Please enter a valid referral code');
       return;
     }
+    if (!_termsAccepted) {
+      setState(() => _error = 'You must accept the Terms of Use to register');
+      return;
+    }
     setState(() { _loading = true; _error = null; });
     try {
       await context.read<ApiClient>().post(ApiEndpoints.register, data: {
@@ -89,6 +95,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'email': _email.text.trim(),
         'password': _password.text,
         'password_confirmation': _confirm.text,
+        'terms_accepted': true,
       });
       setState(() => _success = 'Registration successful! You can sign in now.');
       if (mounted) {
@@ -147,6 +154,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
               obscureText: _obscure2,
               decoration: InputDecoration(labelText: 'Confirm Password *', suffixIcon: IconButton(icon: Icon(_obscure2 ? Icons.visibility : Icons.visibility_off), onPressed: () => setState(() => _obscure2 = !_obscure2))),
               validator: (v) => v != _password.text ? 'Passwords must match' : null,
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Checkbox(
+                  value: _termsAccepted,
+                  activeColor: AppColors.primary,
+                  onChanged: _loading
+                      ? null
+                      : (v) => setState(() {
+                            _termsAccepted = v ?? false;
+                            if (_termsAccepted) _error = null;
+                          }),
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _loading ? null : () => showTermsOfUseModal(context),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text.rich(
+                        TextSpan(
+                          style: const TextStyle(fontSize: 14, height: 1.4),
+                          children: [
+                            const TextSpan(text: 'I agree to the '),
+                            TextSpan(
+                              text: 'Terms of Use',
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             if (_error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_error!, style: const TextStyle(color: Colors.red))),
             if (_success != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_success!, style: const TextStyle(color: Colors.green))),

@@ -34,20 +34,10 @@ class _SplashScreenState extends State<SplashScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.25),
-                            blurRadius: 28,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Image.asset('assets/images/logo.png', height: 110),
+                    Image.asset(
+                      'assets/images/art-logo.png',
+                      height: 160,
+                      fit: BoxFit.contain,
                     ),
                     const SizedBox(height: 28),
                     const CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),

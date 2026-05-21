@@ -5,11 +5,10 @@ import 'package:serve_cafe_mobile/core/auth/auth_provider.dart';
 import 'package:serve_cafe_mobile/screens/account/account_screen.dart';
 import 'package:serve_cafe_mobile/screens/account/change_password_screen.dart';
 import 'package:serve_cafe_mobile/screens/account/change_referral_screen.dart';
-import 'package:serve_cafe_mobile/screens/account/privacy_policy_screen.dart';
+import 'package:serve_cafe_mobile/screens/account/my_order_otp_screen.dart';
 import 'package:serve_cafe_mobile/screens/account/profile_screen.dart';
 import 'package:serve_cafe_mobile/screens/account/share_referral_screen.dart';
 import 'package:serve_cafe_mobile/screens/account/support_screen.dart';
-import 'package:serve_cafe_mobile/screens/account/terms_of_service_screen.dart';
 import 'package:serve_cafe_mobile/screens/account/transactions_screen.dart';
 import 'package:serve_cafe_mobile/screens/auth/forgot_password_screen.dart';
 import 'package:serve_cafe_mobile/screens/auth/login_screen.dart';
@@ -83,8 +82,7 @@ class AppRouter {
                   GoRoute(path: 'badges', builder: (_, _) => const BadgesScreen()),
                   GoRoute(path: 'transactions', builder: (_, _) => const TransactionsScreen()),
                   GoRoute(path: 'support', builder: (_, _) => const SupportScreen()),
-                  GoRoute(path: 'privacy', builder: (_, _) => const PrivacyPolicyScreen()),
-                  GoRoute(path: 'terms', builder: (_, _) => const TermsOfServiceScreen()),
+                  GoRoute(path: 'order-otp', builder: (_, _) => const MyOrderOtpScreen()),
                 ],
               ),
             ]),

@@ -27,7 +27,7 @@ Start the API first from `backend-api/` on port 8001.
 
 ## App icon & splash
 
-After changing `assets/images/logo.png`, regenerate native assets:
+After changing `assets/images/art-logo.png` (splash & app icon) or `logo.png` (in-app headers), regenerate native assets:
 
 ```bash
 dart run flutter_native_splash:create

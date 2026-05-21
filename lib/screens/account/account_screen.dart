@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:serve_cafe_mobile/core/auth/auth_provider.dart';
 import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
 import 'package:serve_cafe_mobile/utils/format.dart';
+import 'package:serve_cafe_mobile/widgets/delete_account_dialog.dart';
 import 'package:serve_cafe_mobile/widgets/logout_confirm_dialog.dart';
 import 'package:serve_cafe_mobile/widgets/member_type_chip.dart';
 import 'package:serve_cafe_mobile/widgets/menu_section_card.dart';
@@ -85,14 +86,23 @@ class AccountScreen extends StatelessWidget {
                   ],
                 ),
                 MenuSectionCard(
-                  title: 'Help & Legal',
+                  title: 'Orders',
                   children: [
-                    MenuTile(icon: Icons.support_agent_outlined, label: 'Support', onTap: () => context.push('/account/support')),
-                    MenuTile(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', onTap: () => context.push('/account/privacy')),
                     MenuTile(
-                      icon: Icons.description_outlined,
-                      label: 'Terms of Service',
-                      onTap: () => context.push('/account/terms'),
+                      icon: Icons.pin_outlined,
+                      label: 'My Order OTP',
+                      onTap: () => context.push('/account/order-otp'),
+                      showDivider: false,
+                    ),
+                  ],
+                ),
+                MenuSectionCard(
+                  title: 'Help',
+                  children: [
+                    MenuTile(
+                      icon: Icons.support_agent_outlined,
+                      label: 'Support',
+                      onTap: () => context.push('/account/support'),
                       showDivider: false,
                     ),
                   ],
@@ -100,6 +110,13 @@ class AccountScreen extends StatelessWidget {
                 MenuSectionCard(
                   title: 'Session',
                   children: [
+                    MenuTile(
+                      icon: Icons.person_remove_outlined,
+                      label: 'Delete Account',
+                      iconColor: AppColors.danger,
+                      textColor: AppColors.danger,
+                      onTap: () => showDeleteAccountDialog(context),
+                    ),
                     MenuTile(
                       icon: Icons.logout,
                       label: 'Log Out',

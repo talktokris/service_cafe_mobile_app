@@ -55,16 +55,20 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: assets/images/logo.png
+  image_path: assets/images/art-logo.png
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: assets/images/logo.png
+  adaptive_icon_foreground: assets/images/art-logo.png
+  adaptive_icon_foreground_inset: 0
 
 flutter_native_splash:
   color: "#FFFFFF"
-  image: assets/images/logo.png
+  image: assets/images/art-logo.png
+  android_gravity: center
+  ios_content_mode: center
   android_12:
     color: "#FFFFFF"
-    image: assets/images/logo.png
+    image: assets/images/art-logo.png
+    icon_background_color: "#FFFFFF"
   ios: true
   android: true
 
