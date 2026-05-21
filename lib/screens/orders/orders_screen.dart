@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:serve_cafe_mobile/core/api/api_client.dart';
 import 'package:serve_cafe_mobile/core/api/api_endpoints.dart';
 import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
+import 'package:serve_cafe_mobile/utils/api_parsing.dart';
 import 'package:serve_cafe_mobile/utils/format.dart';
 import 'package:serve_cafe_mobile/utils/transaction_helpers.dart';
 import 'package:serve_cafe_mobile/widgets/date_filter_bar.dart';
@@ -69,7 +70,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       final body = await api.get(ApiEndpoints.orders, query: _queryParams());
       final data = body['data'] as Map<String, dynamic>;
       final list = data['data'] as List<dynamic>? ?? [];
-      final lastPage = data['last_page'] as int? ?? 1;
+      final lastPage = parseApiInt(data['last_page'], 1);
       if (mounted) {
         setState(() {
           _orders.addAll(list);

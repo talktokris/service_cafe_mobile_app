@@ -46,10 +46,10 @@ class AppRouter {
         return null;
       },
       routes: [
-        GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
-        GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+        GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
+        GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
         GoRoute(path: '/register', builder: (_, s) => RegisterScreen(initialReferralCode: s.uri.queryParameters['ref'])),
-        GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordScreen()),
+        GoRoute(path: '/forgot-password', builder: (_, _) => const ForgotPasswordScreen()),
         GoRoute(
           path: '/reset-password',
           builder: (c, s) => ResetPasswordScreen(initialEmail: s.extra as String? ?? s.uri.queryParameters['email']),
@@ -59,32 +59,32 @@ class AppRouter {
               MainShell(navigationShell: navigationShell),
           branches: [
             StatefulShellBranch(routes: [
-              GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
+              GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
             ]),
             StatefulShellBranch(routes: [
-              GoRoute(path: '/orders', builder: (_, __) => const OrdersScreen()),
+              GoRoute(path: '/orders', builder: (_, _) => const OrdersScreen()),
             ]),
             StatefulShellBranch(routes: [
-              GoRoute(path: '/earnings', builder: (_, __) => const EarningsScreen()),
+              GoRoute(path: '/earnings', builder: (_, _) => const EarningsScreen()),
             ]),
             StatefulShellBranch(routes: [
-              GoRoute(path: '/wallet', builder: (_, __) => const WalletScreen()),
+              GoRoute(path: '/wallet', builder: (_, _) => const WalletScreen()),
             ]),
             StatefulShellBranch(routes: [
               GoRoute(
                 path: '/account',
-                builder: (_, __) => const AccountScreen(),
+                builder: (_, _) => const AccountScreen(),
                 routes: [
-                  GoRoute(path: 'profile', builder: (_, __) => const ProfileScreen()),
-                  GoRoute(path: 'change-password', builder: (_, __) => const ChangePasswordScreen()),
-                  GoRoute(path: 'change-referral', builder: (_, __) => const ChangeReferralScreen()),
-                  GoRoute(path: 'share-referral', builder: (_, __) => const ShareReferralScreen()),
-                  GoRoute(path: 'tree-view', builder: (_, __) => const TreeViewScreen()),
-                  GoRoute(path: 'badges', builder: (_, __) => const BadgesScreen()),
-                  GoRoute(path: 'transactions', builder: (_, __) => const TransactionsScreen()),
-                  GoRoute(path: 'support', builder: (_, __) => const SupportScreen()),
-                  GoRoute(path: 'privacy', builder: (_, __) => const PrivacyPolicyScreen()),
-                  GoRoute(path: 'terms', builder: (_, __) => const TermsOfServiceScreen()),
+                  GoRoute(path: 'profile', builder: (_, _) => const ProfileScreen()),
+                  GoRoute(path: 'change-password', builder: (_, _) => const ChangePasswordScreen()),
+                  GoRoute(path: 'change-referral', builder: (_, _) => const ChangeReferralScreen()),
+                  GoRoute(path: 'share-referral', builder: (_, _) => const ShareReferralScreen()),
+                  GoRoute(path: 'tree-view', builder: (_, _) => const TreeViewScreen()),
+                  GoRoute(path: 'badges', builder: (_, _) => const BadgesScreen()),
+                  GoRoute(path: 'transactions', builder: (_, _) => const TransactionsScreen()),
+                  GoRoute(path: 'support', builder: (_, _) => const SupportScreen()),
+                  GoRoute(path: 'privacy', builder: (_, _) => const PrivacyPolicyScreen()),
+                  GoRoute(path: 'terms', builder: (_, _) => const TermsOfServiceScreen()),
                 ],
               ),
             ]),

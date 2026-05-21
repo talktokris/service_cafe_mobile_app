@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:serve_cafe_mobile/core/api/api_client.dart';
 import 'package:serve_cafe_mobile/core/api/api_endpoints.dart';
 import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
+import 'package:serve_cafe_mobile/utils/api_parsing.dart';
 import 'package:serve_cafe_mobile/utils/format.dart';
 import 'package:serve_cafe_mobile/utils/transaction_helpers.dart';
 import 'package:serve_cafe_mobile/widgets/error_state.dart';
@@ -40,7 +41,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
-  double _num(dynamic v) => (v as num?)?.toDouble() ?? 0;
+  double _num(dynamic v) => parseApiDouble(v);
 
   @override
   Widget build(BuildContext context) {
@@ -96,14 +97,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       const SizedBox(height: 8),
                       ...items.map((item) {
                         final m = item as Map<String, dynamic>;
-                        final qty = m['quantity'] ?? 1;
+                        final qty = parseApiInt(m['quantity'], 1);
                         final unit = m['sellingPrice'] ?? m['price'] ?? m['amount'] ?? 0;
-                        final sub = m['subTotalAmount'] ?? m['sub_total_amount'] ?? (qty * (_num(unit)));
-                        final name = m['itemName']?.toString() ??
-                            m['name']?.toString() ??
-                            (m['menu_item'] as Map?)?['name']?.toString() ??
-                            (m['menuItem'] as Map?)?['name']?.toString() ??
-                            'Item';
+                        final sub = m['subTotalAmount'] ?? m['sub_total_amount'] ?? (qty * _num(unit));
+                        final name = orderItemName(m);
                         return Card(
                           margin: const EdgeInsets.only(bottom: 6),
                           child: ListTile(
@@ -143,8 +140,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           children: [
             Text(title, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.primary)),
             const SizedBox(height: 8),
-            if (text != null) Text(text),
-            if (child != null) child,
+            ...? (text == null ? null : [Text(text)]),
+            ?child,
           ],
         ),
       ),

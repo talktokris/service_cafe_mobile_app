@@ -36,10 +36,12 @@ class _ChangeReferralScreenState extends State<ChangeReferralScreen> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Referral code must be at least 3 characters')));
       return;
     }
+    final api = context.read<ApiClient>();
+    final auth = context.read<AuthProvider>();
     setState(() => _loading = true);
     try {
-      await context.read<ApiClient>().put(ApiEndpoints.profileReferral, data: {'referral_code': code});
-      await context.read<AuthProvider>().fetchMe();
+      await api.put(ApiEndpoints.profileReferral, data: {'referral_code': code});
+      await auth.fetchMe();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Referral address updated'), backgroundColor: Colors.green),

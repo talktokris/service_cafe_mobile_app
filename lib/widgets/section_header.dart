@@ -26,14 +26,16 @@ class SectionHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: AppDecorations.sectionTitle(context)),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 2),
-                  Text(subtitle!, style: AppDecorations.sectionSubtitle(context)),
-                ],
+                ...? (subtitle == null
+                    ? null
+                    : [
+                        const SizedBox(height: 2),
+                        Text(subtitle!, style: AppDecorations.sectionSubtitle(context)),
+                      ]),
               ],
             ),
           ),
-          if (trailing != null) trailing!,
+          ?trailing,
         ],
       ),
     );

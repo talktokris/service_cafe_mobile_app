@@ -1,6 +1,6 @@
 {
-    "name": "serve_cafe_mobile",
-    "short_name": "serve_cafe_mobile",
+    "name": "Serve Cafe",
+    "short_name": "Serve Cafe",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

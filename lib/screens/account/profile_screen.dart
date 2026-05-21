@@ -56,9 +56,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       return;
     }
+    final api = context.read<ApiClient>();
+    final auth = context.read<AuthProvider>();
     setState(() => _loading = true);
     try {
-      await context.read<ApiClient>().put(ApiEndpoints.profile, data: {
+      await api.put(ApiEndpoints.profile, data: {
         'first_name': _first.text.trim(),
         'last_name': _last.text.trim(),
         'email': _email.text.trim(),
@@ -67,7 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'gender': _gender,
         'country': _country,
       });
-      await context.read<AuthProvider>().fetchMe();
+      await auth.fetchMe();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated successfully'), backgroundColor: Colors.green),
@@ -96,7 +98,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           TextField(controller: _last, decoration: const InputDecoration(labelText: 'Last Name', prefixIcon: Icon(Icons.person_outline))),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: _gender,
+            key: ValueKey(_gender),
+            initialValue: _gender,
             decoration: const InputDecoration(labelText: 'Gender', prefixIcon: Icon(Icons.wc_outlined)),
             items: const [
               DropdownMenuItem(value: 'male', child: Text('Male')),
@@ -107,7 +110,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: kCountries.contains(_country) ? _country : 'Nepal',
+            key: ValueKey(_country),
+            initialValue: kCountries.contains(_country) ? _country : 'Nepal',
             decoration: const InputDecoration(labelText: 'Country', prefixIcon: Icon(Icons.public)),
             isExpanded: true,
             items: kCountries.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),

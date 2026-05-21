@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:serve_cafe_mobile/core/api/api_client.dart';
 import 'package:serve_cafe_mobile/core/api/api_endpoints.dart';
+import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
 
 class CashOutDialog extends StatefulWidget {
   const CashOutDialog({super.key, required this.maxAmount});
@@ -43,7 +44,21 @@ class _CashOutDialogState extends State<CashOutDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Cash Out'),
-      content: TextField(controller: _amount, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Amount (NRS)')),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: _amount,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'Amount (NRS)'),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(_error!, style: const TextStyle(fontSize: 12, color: AppColors.danger)),
+          ],
+        ],
+      ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
         ElevatedButton(onPressed: _loading ? null : _submit, child: const Text('Submit')),

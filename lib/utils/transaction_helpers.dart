@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:serve_cafe_mobile/utils/api_parsing.dart';
 
 String earningTypeLabel(int? type) {
   switch (type) {
@@ -125,7 +126,7 @@ List<Map<String, dynamic>> withRunningBalances(
   if (items.isEmpty) return [];
 
   final sorted = [...items]
-    ..sort((a, b) => ((b as Map)['id'] as num).compareTo((a as Map)['id'] as num));
+    ..sort((a, b) => parseApiInt((b as Map)['id']).compareTo(parseApiInt((a as Map)['id'])));
 
   var balance = totalBalance;
   final result = <Map<String, dynamic>>[];
@@ -135,8 +136,8 @@ List<Map<String, dynamic>> withRunningBalances(
     if (i == 0) {
       tx['calculated_balance'] = balance;
     } else {
-      final amount = (tx['amount'] as num?)?.toDouble() ?? 0;
-      final dc = (tx['debit_credit'] as num?)?.toInt() ?? 0;
+      final amount = parseApiDouble(tx['amount']);
+      final dc = parseApiInt(tx['debit_credit']);
       if (dc == 1) {
         balance += amount;
       } else {
@@ -165,6 +166,22 @@ String orderLocation(Map<String, dynamic> order) {
         'Unknown Location';
   }
   return 'Unknown Location';
+}
+
+String orderItemName(Map<String, dynamic> item) {
+  final menu = item['menu_item'] as Map<String, dynamic>? ??
+      item['menuItem'] as Map<String, dynamic>?;
+  if (menu != null) {
+    final fromMenu = menu['menuName'] ?? menu['menu_name'];
+    if (fromMenu != null && fromMenu.toString().trim().isNotEmpty) {
+      return fromMenu.toString();
+    }
+  }
+  for (final key in ['menuName', 'menu_name', 'itemName', 'item_name', 'name']) {
+    final v = item[key];
+    if (v != null && v.toString().trim().isNotEmpty) return v.toString();
+  }
+  return 'Unknown Item';
 }
 
 String orderCashier(Map<String, dynamic> order) {

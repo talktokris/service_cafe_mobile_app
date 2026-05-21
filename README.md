@@ -24,4 +24,14 @@ Start the API first from `backend-api/` on port 8001.
 - Sanctum token auth with secure storage
 - Paid-only: Earnings, Cash Wallet, Badges (locked UI for free members)
 - Brand colors: `#531414` / `#DE3032`
-# service_cafe_mobile_app
+
+## App icon & splash
+
+After changing `assets/images/logo.png`, regenerate native assets:
+
+```bash
+dart run flutter_native_splash:create
+dart run flutter_launcher_icons
+```
+
+Then stop the app and run again (or reinstall on the emulator) so the home-screen icon and launch splash update.
