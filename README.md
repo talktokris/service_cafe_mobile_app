@@ -2,7 +2,7 @@
 
 Flutter app for free and paid members.
 
-## Run
+## Run (local API)
 
 ```bash
 cd mobile-app
@@ -15,6 +15,22 @@ Android emulator:
 ```bash
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8001/api
 ```
+
+## Production APK (real device)
+
+Default API URL is production (`https://servecafe.com/backend-mobile-api/api`).
+
+```bash
+cd mobile-app
+flutter pub get
+flutter build apk --release
+```
+
+Install the APK from:
+
+`build/app/outputs/flutter-apk/app-release.apk`
+
+Copy to your phone (USB, AirDrop, cloud) and open it. Enable “Install unknown apps” if Android asks.
 
 Start the API first from `backend-api/` on port 8001.
 

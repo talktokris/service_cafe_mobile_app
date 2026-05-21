@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:serve_cafe_mobile/core/api/network_errors.dart';
 import 'package:serve_cafe_mobile/core/auth/token_storage.dart';
 import 'package:serve_cafe_mobile/core/config/app_config.dart';
 
@@ -63,18 +64,6 @@ class ApiClient {
     return body;
   }
 
-  static String friendlyError(Object error) {
-    if (error is DioException) {
-      if (error.type == DioExceptionType.connectionError ||
-          error.type == DioExceptionType.connectionTimeout) {
-        return 'No internet connection. Check your network and try again.';
-      }
-      if (error.response?.data is Map) {
-        final msg = (error.response!.data as Map)['message'];
-        if (msg != null) return msg.toString();
-      }
-      return error.message ?? 'Something went wrong';
-    }
-    return error.toString();
-  }
+  /// Maps API/network failures to clear user-facing text.
+  static String friendlyError(Object error) => resolveApiError(error);
 }

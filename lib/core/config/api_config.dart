@@ -12,7 +12,7 @@ class ApiConfig {
   /// Production — cPanel: public_html/backend-mobile-api → Laravel public/
   static const String productionApiBaseUrl = 'https://servecafe.com/backend-mobile-api/api';
 
-  /// Default used when no --dart-define=API_BASE_URL is passed.
-  /// Switch to [productionApiBaseUrl] for store/release builds if you prefer.
-  static const String defaultApiBaseUrl = localApiBaseUrl;
+  /// Default when no --dart-define=API_BASE_URL is passed (release APK uses production).
+  /// For local dev: flutter run --dart-define=API_BASE_URL=http://127.0.0.1:8001/api
+  static const String defaultApiBaseUrl = productionApiBaseUrl;
 }
