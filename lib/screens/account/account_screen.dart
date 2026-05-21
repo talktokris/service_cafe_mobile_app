@@ -21,6 +21,15 @@ class AccountScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final deleted = await showDeleteAccountDialog(context);
+    if (!context.mounted || deleted != true) return;
+
+    await context.read<AuthProvider>().logout();
+    if (!context.mounted) return;
+    context.go('/login');
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
@@ -115,7 +124,7 @@ class AccountScreen extends StatelessWidget {
                       label: 'Delete Account',
                       iconColor: AppColors.danger,
                       textColor: AppColors.danger,
-                      onTap: () => showDeleteAccountDialog(context),
+                      onTap: () => _confirmDeleteAccount(context),
                     ),
                     MenuTile(
                       icon: Icons.logout,

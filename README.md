@@ -18,6 +18,22 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8001/api
 
 Start the API first from `backend-api/` on port 8001.
 
+## API base URL (backend)
+
+Edit **`lib/core/config/api_config.dart`** to set local or production defaults:
+
+- `defaultApiBaseUrl` — used when you run without `--dart-define`
+- `productionApiBaseUrl` — set your hosted Laravel API URL before release
+
+Override anytime at run or build:
+
+```bash
+flutter run --dart-define=API_BASE_URL=https://your-domain.com/api
+flutter build apk --dart-define=API_BASE_URL=https://your-domain.com/api
+```
+
+The active URL is read in `lib/core/config/app_config.dart`.
+
 ## Features
 
 - 5-tab navigation: Home, Orders, Earnings, Wallet, Account

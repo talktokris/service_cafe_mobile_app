@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:serve_cafe_mobile/core/api/api_client.dart';
 import 'package:serve_cafe_mobile/core/api/api_endpoints.dart';
 import 'package:serve_cafe_mobile/core/auth/auth_provider.dart';
 import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
+import 'package:serve_cafe_mobile/utils/referral_code.dart';
 import 'package:serve_cafe_mobile/widgets/gradient_app_bar.dart';
 
 class ChangeReferralScreen extends StatefulWidget {
@@ -31,9 +31,10 @@ class _ChangeReferralScreenState extends State<ChangeReferralScreen> {
   }
 
   Future<void> _save() async {
-    final code = _code.text.trim().toLowerCase();
-    if (code.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Referral code must be at least 3 characters')));
+    final code = _code.text.trim();
+    final validation = validateReferralCodeField(code);
+    if (validation != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(validation)));
       return;
     }
     final api = context.read<ApiClient>();
@@ -74,11 +75,12 @@ class _ChangeReferralScreenState extends State<ChangeReferralScreen> {
           const SizedBox(height: 16),
           TextField(
             controller: _code,
-            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9]'))],
+            inputFormatters: referralCodeInputFormatters,
+            autocorrect: false,
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               labelText: 'New Referral Address',
-              helperText: '$len / 60 characters (lowercase letters and numbers only)',
+              helperText: '$len / 60 characters (letters, numbers, - and _)',
               prefixIcon: const Icon(Icons.link),
             ),
           ),
@@ -106,7 +108,7 @@ class _ChangeReferralScreenState extends State<ChangeReferralScreen> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: _loading || len < 3 ? null : _save,
+            onPressed: _loading || validateReferralCodeField(_code.text) != null ? null : _save,
             child: _loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Update Referral Address'),
           ),
         ],

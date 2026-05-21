@@ -23,29 +23,63 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: double.infinity,
         decoration: const BoxDecoration(gradient: AppColors.gradientVertical),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Opacity(opacity: 0.08, child: Image.asset('assets/images/art-logo.png', fit: BoxFit.cover)),
-            Center(
-              child: Padding(
+        child: SafeArea(
+          child: Column(
+            children: [
+              const Spacer(flex: 2),
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(
-                      'assets/images/art-logo.png',
-                      height: 160,
-                      fit: BoxFit.contain,
-                    ),
-                    const SizedBox(height: 28),
-                    const CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                  ],
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 36,
+                        offset: const Offset(0, 16),
+                      ),
+                    ],
+                  ),
+                  child: Image.asset(
+                    'assets/images/splash_brand_tile.png',
+                    height: 176,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 28),
+              const Text(
+                'SERVE CAFE',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'YOUR FLAVOR HAVEN',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.88),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const Spacer(flex: 2),
+              const SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              ),
+              const SizedBox(height: 48),
+            ],
+          ),
         ),
       ),
     );

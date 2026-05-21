@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:serve_cafe_mobile/core/api/api_client.dart';
 import 'package:serve_cafe_mobile/core/api/api_endpoints.dart';
 import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
 import 'package:serve_cafe_mobile/widgets/auth_scaffold.dart';
+import 'package:serve_cafe_mobile/utils/referral_code.dart';
 import 'package:serve_cafe_mobile/widgets/terms_of_use_modal.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -56,14 +56,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _validateReferral() async {
-    final code = _referral.text.trim().toLowerCase();
-    if (code.length < 3) {
+    final code = _referral.text.trim();
+    if (!referralCodePattern.hasMatch(code)) {
       setState(() { _referralValid = false; _referrerName = null; });
       return;
     }
     setState(() { _checkingReferral = true; _error = null; });
     try {
-      final body = await context.read<ApiClient>().get('${ApiEndpoints.validateReferral}/$code');
+      final body = await context.read<ApiClient>().get(
+        '${ApiEndpoints.validateReferral}/${encodeReferralCodeForPath(code)}',
+      );
       final data = body['data'] as Map<String, dynamic>;
       setState(() {
         _referralValid = true;
@@ -89,7 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() { _loading = true; _error = null; });
     try {
       await context.read<ApiClient>().post(ApiEndpoints.register, data: {
-        'referral_code': _referral.text.trim().toLowerCase(),
+        'referral_code': _referral.text.trim(),
         'first_name': _first.text.trim(),
         'last_name': _last.text.trim(),
         'email': _email.text.trim(),
@@ -131,9 +133,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     : Icon(_referralValid ? Icons.check_circle : Icons.help_outline, color: _referralValid ? Colors.green : null),
                 helperText: 'Same code from /join/yourcode link on the website',
               ),
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9]'))],
+              inputFormatters: referralCodeInputFormatters,
+              textCapitalization: TextCapitalization.none,
+              autocorrect: false,
               onChanged: (_) => _validateReferral(),
-              validator: (v) => v == null || v.length < 3 ? 'Referral code required' : null,
+              validator: validateReferralCodeField,
             ),
             const SizedBox(height: 12),
             TextFormField(controller: _first, decoration: const InputDecoration(labelText: 'First Name *'), validator: (v) => v!.isEmpty ? 'Required' : null),
