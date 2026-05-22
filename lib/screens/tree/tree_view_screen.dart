@@ -9,6 +9,7 @@ import 'package:serve_cafe_mobile/widgets/loading_overlay.dart';
 import 'package:serve_cafe_mobile/widgets/referral_tree/referral_tree_constants.dart';
 import 'package:serve_cafe_mobile/widgets/referral_tree/referral_tree_legend.dart';
 import 'package:serve_cafe_mobile/widgets/referral_tree/referral_tree_widget.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
 
 class TreeViewScreen extends StatefulWidget {
   const TreeViewScreen({super.key});
@@ -81,11 +82,10 @@ class _TreeViewScreenState extends State<TreeViewScreen> {
           ? const LoadingOverlay()
           : _error != null
               ? ErrorState(message: _error!, onRetry: () => _load(startUserId: _rootId))
-              : RefreshIndicator(
+              : PullToRefresh.list(
                   onRefresh: () => _load(startUserId: _rootId),
-                  child: ListView(
-                    padding: const EdgeInsets.all(12),
-                    children: [
+                  padding: const EdgeInsets.all(12),
+                  children: [
                       if (showNavBar) _NavigationBar(
                         parentInfo: _parentInfo,
                         viewingOwnTree: viewingOwnTree,
@@ -102,7 +102,6 @@ class _TreeViewScreenState extends State<TreeViewScreen> {
                       const SizedBox(height: 16),
                       const ReferralTreeLegend(),
                     ],
-                  ),
                 ),
     );
   }

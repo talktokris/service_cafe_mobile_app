@@ -9,6 +9,7 @@ import 'package:serve_cafe_mobile/widgets/error_state.dart';
 import 'package:serve_cafe_mobile/widgets/gradient_app_bar.dart';
 import 'package:serve_cafe_mobile/widgets/loading_overlay.dart';
 import 'package:serve_cafe_mobile/widgets/locked_feature_banner.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
 
 class BadgesScreen extends StatefulWidget {
   const BadgesScreen({super.key});
@@ -74,9 +75,14 @@ class _BadgesScreenState extends State<BadgesScreen> {
     final isFree = context.watch<AuthProvider>().user?.isFree ?? true;
 
     if (isFree) {
-      return const Scaffold(
-        appBar: GradientAppBar(title: 'Badges', showBack: true),
-        body: LockedFeatureBanner(),
+      return Scaffold(
+        appBar: const GradientAppBar(title: 'Badges', showBack: true),
+        body: PullToRefresh.wrap(
+          onRefresh: () async {
+            await context.read<AuthProvider>().fetchMe();
+          },
+          child: const LockedFeatureBanner(),
+        ),
       );
     }
 
@@ -86,11 +92,10 @@ class _BadgesScreenState extends State<BadgesScreen> {
           ? const LoadingOverlay()
           : _error != null
               ? ErrorState(message: _error!, onRetry: _load)
-              : RefreshIndicator(
+              : PullToRefresh.list(
                   onRefresh: _load,
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
+                  padding: const EdgeInsets.all(16),
+                  children: [
                       _progressCard(),
                       const SizedBox(height: 20),
                       const Text('Your Badges', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
@@ -115,7 +120,6 @@ class _BadgesScreenState extends State<BadgesScreen> {
                       else
                         ..._uplineTiles(),
                     ],
-                  ),
                 ),
     );
   }

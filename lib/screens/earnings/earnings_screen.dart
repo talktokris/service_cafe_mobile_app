@@ -17,6 +17,7 @@ import 'package:serve_cafe_mobile/widgets/gradient_app_bar.dart';
 import 'package:serve_cafe_mobile/widgets/loading_overlay.dart';
 import 'package:serve_cafe_mobile/widgets/locked_feature_banner.dart';
 import 'package:serve_cafe_mobile/widgets/premium_screen_body.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
 
 class EarningsScreen extends StatefulWidget {
   const EarningsScreen({super.key});
@@ -56,7 +57,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
     }
     setState(() { _loading = true; _error = null; });
     try {
-      final query = <String, dynamic>{'per_page': 200};
+      final query = <String, dynamic>{'per_page': 50};
       if (_from != null) query['from_date'] = DateFormat('yyyy-MM-dd').format(_from!);
       if (_to != null) query['to_date'] = DateFormat('yyyy-MM-dd').format(_to!);
       if (_type.isNotEmpty) query['type'] = _type;
@@ -113,7 +114,12 @@ class _EarningsScreenState extends State<EarningsScreen> {
     if (isFree) {
       return Scaffold(
         appBar: const GradientAppBar(title: 'Earnings'),
-        body: const LockedFeatureBanner(child: SizedBox(height: 200)),
+        body: PullToRefresh.wrap(
+          onRefresh: () async {
+            await context.read<AuthProvider>().fetchMe();
+          },
+          child: const LockedFeatureBanner(child: SizedBox(height: 200)),
+        ),
       );
     }
 
@@ -130,12 +136,10 @@ class _EarningsScreenState extends State<EarningsScreen> {
             ? const LoadingOverlay()
             : _error != null && _items.isEmpty && s == null
                 ? ErrorState(message: _error!, onRetry: _load)
-                : RefreshIndicator(
-                    color: AppColors.accent,
+                : PullToRefresh.list(
                     onRefresh: _load,
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-                      children: [
+                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+                    children: [
                         if (s != null) EarningsSummaryPanel(summary: s, onWithdraw: _withdraw),
                         const SizedBox(height: 10),
                         DateFilterBar(
@@ -193,7 +197,6 @@ class _EarningsScreenState extends State<EarningsScreen> {
                         else
                           ..._items.map((e) => EarningsHistoryTile(earning: e as Map<String, dynamic>)),
                       ],
-                    ),
                   ),
       ),
     );

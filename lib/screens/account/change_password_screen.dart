@@ -5,6 +5,8 @@ import 'package:serve_cafe_mobile/core/api/api_client.dart';
 import 'package:serve_cafe_mobile/core/api/api_endpoints.dart';
 import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
 import 'package:serve_cafe_mobile/widgets/gradient_app_bar.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
+import 'package:serve_cafe_mobile/core/auth/auth_provider.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -63,9 +65,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const GradientAppBar(title: 'Change Password', showBack: true),
-      body: ListView(
+      body: PullToRefresh.wrap(
+        onRefresh: () async {
+          await context.read<AuthProvider>().fetchMe();
+        },
         padding: const EdgeInsets.all(16),
-        children: [
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -89,7 +96,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             onPressed: _loading ? null : _save,
             child: _loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Update Password'),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -10,6 +10,7 @@ import 'package:serve_cafe_mobile/utils/url_launch.dart';
 import 'package:serve_cafe_mobile/widgets/error_state.dart';
 import 'package:serve_cafe_mobile/widgets/gradient_app_bar.dart';
 import 'package:serve_cafe_mobile/widgets/loading_overlay.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
 
 class ShareReferralScreen extends StatefulWidget {
   const ShareReferralScreen({super.key});
@@ -61,11 +62,10 @@ class _ShareReferralScreenState extends State<ShareReferralScreen> {
           ? const LoadingOverlay()
           : _error != null
               ? ErrorState(message: _error!, onRetry: _load)
-              : RefreshIndicator(
+              : PullToRefresh.list(
                   onRefresh: _load,
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
+                  padding: const EdgeInsets.all(16),
+                  children: [
                       if (!hasCode) ...[
                         Card(
                           color: Colors.orange.shade50,
@@ -125,7 +125,6 @@ class _ShareReferralScreenState extends State<ShareReferralScreen> {
                             ),
                           )),
                     ],
-                  ),
                 ),
     );
   }

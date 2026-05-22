@@ -14,6 +14,7 @@ import 'package:serve_cafe_mobile/widgets/premium_quick_action.dart';
 import 'package:serve_cafe_mobile/widgets/premium_screen_body.dart';
 import 'package:serve_cafe_mobile/widgets/section_header.dart';
 import 'package:serve_cafe_mobile/widgets/home_overview_grid.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,31 +36,50 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
-    try {
-      final api = context.read<ApiClient>();
-      final isPaid = context.read<AuthProvider>().user?.isPaid ?? false;
-      final body = await api.get(ApiEndpoints.dashboard);
-      double? earningBal;
-      if (isPaid) {
-        try {
-          final earnBody = await api.get(ApiEndpoints.earnings, query: {'per_page': 1});
-          final earnData = earnBody['data'] as Map<String, dynamic>?;
-          final summary = earnData?['summary'] as Map<String, dynamic>?;
-          earningBal = (summary?['earning_balance'] as num?)?.toDouble();
-        } catch (_) {}
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final api = context.read<ApiClient>();
+    final isPaid = context.read<AuthProvider>().user?.isPaid ?? false;
+
+    Map<String, dynamic>? dashboardData;
+    double? earningBal;
+    String? loadError;
+
+    Future<void> loadDashboard() async {
+      try {
+        final body = await api.get(ApiEndpoints.dashboard);
+        dashboardData = body['data'] as Map<String, dynamic>;
+      } catch (e) {
+        loadError = ApiClient.friendlyError(e);
       }
-      if (mounted) {
-        setState(() {
-          _data = body['data'] as Map<String, dynamic>;
-          _earningBalance = earningBal;
-        });
-      }
-    } catch (e) {
-      if (mounted) setState(() => _error = ApiClient.friendlyError(e));
-    } finally {
-      if (mounted) setState(() => _loading = false);
     }
+
+    Future<void> loadEarningsHint() async {
+      if (!isPaid) return;
+      try {
+        final earnBody =
+            await api.get(ApiEndpoints.earnings, query: {'per_page': 1});
+        final earnData = earnBody['data'] as Map<String, dynamic>?;
+        final summary = earnData?['summary'] as Map<String, dynamic>?;
+        earningBal = (summary?['earning_balance'] as num?)?.toDouble();
+      } catch (_) {}
+    }
+
+    await Future.wait([loadDashboard(), loadEarningsHint()]);
+
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      if (dashboardData != null) {
+        _data = dashboardData;
+        _earningBalance = earningBal;
+        _error = null;
+      } else {
+        _error = loadError;
+      }
+    });
   }
 
   @override
@@ -76,12 +96,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ? const LoadingOverlay(message: 'Loading dashboard...')
             : _error != null
                 ? ErrorState(message: _error!, onRetry: _load)
-                : RefreshIndicator(
-                    color: AppColors.accent,
+                : PullToRefresh.list(
                     onRefresh: _load,
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                      children: [
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    children: [
                         _welcomeHero(firstName, user?.referralCode),
                         const SizedBox(height: 20),
                         const SectionHeader(title: 'Overview', subtitle: 'Your activity at a glance'),
@@ -187,7 +205,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ],
-                    ),
                   ),
       ),
     );

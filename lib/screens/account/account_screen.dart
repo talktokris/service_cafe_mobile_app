@@ -9,9 +9,19 @@ import 'package:serve_cafe_mobile/widgets/delete_account_dialog.dart';
 import 'package:serve_cafe_mobile/widgets/logout_confirm_dialog.dart';
 import 'package:serve_cafe_mobile/widgets/member_type_chip.dart';
 import 'package:serve_cafe_mobile/widgets/menu_section_card.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
 
-class AccountScreen extends StatelessWidget {
+class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
+
+  @override
+  State<AccountScreen> createState() => _AccountScreenState();
+}
+
+class _AccountScreenState extends State<AccountScreen> {
+  Future<void> _refresh() async {
+    await context.read<AuthProvider>().fetchMe();
+  }
 
   Future<void> _confirmLogout(BuildContext context) async {
     final confirmed = await showLogoutConfirmDialog(context);
@@ -35,11 +45,13 @@ class AccountScreen extends StatelessWidget {
     final user = context.watch<AuthProvider>().user;
     final topPadding = MediaQuery.paddingOf(context).top;
 
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: AppColors.primary,
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness: Brightness.dark,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: AppColors.primary,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -48,16 +60,26 @@ class AccountScreen extends StatelessWidget {
         children: [
           Container(
             width: double.infinity,
-            padding: EdgeInsets.only(top: topPadding + 12, bottom: 20, left: 20, right: 20),
+            padding: EdgeInsets.only(
+              top: topPadding + 12,
+              bottom: 20,
+              left: 20,
+              right: 20,
+            ),
             decoration: const BoxDecoration(gradient: AppColors.gradient),
             child: const Text(
               'My Account',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           Expanded(
-            child: ListView(
+            child: PullToRefresh.list(
+              onRefresh: _refresh,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
                 _ProfileCard(user: user),
@@ -65,8 +87,21 @@ class AccountScreen extends StatelessWidget {
                 MenuSectionCard(
                   title: 'Account',
                   children: [
-                    MenuTile(icon: Icons.person_outline, label: 'Profile', onTap: () => context.push('/account/profile')),
-                    MenuTile(icon: Icons.lock_outline, label: 'Change Password', onTap: () => context.push('/account/change-password')),
+                    MenuTile(
+                      icon: Icons.person_outline,
+                      label: 'Profile',
+                      onTap: () => context.push('/account/profile'),
+                    ),
+                    MenuTile(
+                      icon: Icons.lock_outline,
+                      label: 'Change Password',
+                      onTap: () => context.push('/account/change-password'),
+                    ),
+                    MenuTile(
+                      icon: Icons.account_balance_wallet_outlined,
+                      label: 'Bank & eWallet Setup',
+                      onTap: () => context.push('/account/bank-ewallet-setup'),
+                    ),
                     MenuTile(
                       icon: Icons.edit_outlined,
                       label: 'Change Referral',
@@ -78,9 +113,22 @@ class AccountScreen extends StatelessWidget {
                 MenuSectionCard(
                   title: 'Network',
                   children: [
-                    MenuTile(icon: Icons.share_outlined, label: 'Share Referral', onTap: () => context.push('/account/share-referral')),
-                    MenuTile(icon: Icons.account_tree_outlined, label: 'Tree View', onTap: () => context.push('/account/tree-view')),
-                    MenuTile(icon: Icons.military_tech_outlined, label: 'Badges', onTap: () => context.push('/account/badges'), showDivider: false),
+                    MenuTile(
+                      icon: Icons.share_outlined,
+                      label: 'Share Referral',
+                      onTap: () => context.push('/account/share-referral'),
+                    ),
+                    MenuTile(
+                      icon: Icons.account_tree_outlined,
+                      label: 'Tree View',
+                      onTap: () => context.push('/account/tree-view'),
+                    ),
+                    MenuTile(
+                      icon: Icons.military_tech_outlined,
+                      label: 'Badges',
+                      onTap: () => context.push('/account/badges'),
+                      showDivider: false,
+                    ),
                   ],
                 ),
                 MenuSectionCard(
@@ -152,7 +200,8 @@ class _ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial = (user?.name?.isNotEmpty == true ? user!.name![0] : 'M').toUpperCase();
+    final initial = (user?.name?.isNotEmpty == true ? user!.name![0] : 'M')
+        .toUpperCase();
 
     return Card(
       elevation: 3,
@@ -168,23 +217,40 @@ class _ProfileCard extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: [AppColors.primary.withValues(alpha: 0.3), AppColors.accent.withValues(alpha: 0.3)],
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.3),
+                    AppColors.accent.withValues(alpha: 0.3),
+                  ],
                 ),
               ),
               child: CircleAvatar(
                 radius: 42,
                 backgroundColor: AppColors.surface,
-                child: Text(initial, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                child: Text(
+                  initial,
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 14),
             Text(
               user?.name ?? 'Member',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primary),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
-            Text(user?.email ?? '', style: const TextStyle(color: AppColors.textMuted, fontSize: 14)),
+            Text(
+              user?.email ?? '',
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+            ),
             const SizedBox(height: 14),
             Wrap(
               spacing: 8,
@@ -192,9 +258,13 @@ class _ProfileCard extends StatelessWidget {
               alignment: WrapAlignment.center,
               children: [
                 MemberTypeChip(isPaid: user?.isPaid ?? false),
-                if (user?.referralCode != null && user!.referralCode!.isNotEmpty)
+                if (user?.referralCode != null &&
+                    user!.referralCode!.isNotEmpty)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(20),
@@ -203,9 +273,20 @@ class _ProfileCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.link, size: 14, color: AppColors.primary.withValues(alpha: 0.7)),
+                        Icon(
+                          Icons.link,
+                          size: 14,
+                          color: AppColors.primary.withValues(alpha: 0.7),
+                        ),
                         const SizedBox(width: 6),
-                        Text(user.referralCode!, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.primary, fontSize: 13)),
+                        Text(
+                          user.referralCode!,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                            fontSize: 13,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -218,7 +299,9 @@ class _ProfileCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.accent.withValues(alpha: 0.25)),
+                border: Border.all(
+                  color: AppColors.accent.withValues(alpha: 0.25),
+                ),
               ),
               child: Row(
                 children: [
@@ -228,17 +311,31 @@ class _ProfileCard extends StatelessWidget {
                       color: AppColors.accent.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.account_balance_wallet_outlined, color: AppColors.accent, size: 26),
+                    child: const Icon(
+                      Icons.account_balance_wallet_outlined,
+                      color: AppColors.accent,
+                      size: 26,
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Purchase Wallet', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                        const Text(
+                          'Purchase Wallet',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
                         Text(
                           formatNrs(user?.walletBalance ?? 0),
-                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primary),
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ],
                     ),

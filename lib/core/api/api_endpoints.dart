@@ -23,6 +23,7 @@ class ApiEndpoints {
   static const profile = '/profile';
   static const profilePassword = '/profile/password';
   static const profileReferral = '/profile/referral';
+  static const profileBankEwallet = '/profile/bank-ewallet';
   static const deleteAccount = '/profile/delete-account';
   static const orderOtps = '/order-otps';
 }

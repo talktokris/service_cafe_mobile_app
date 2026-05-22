@@ -6,6 +6,7 @@ import 'package:serve_cafe_mobile/core/auth/auth_provider.dart';
 import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
 import 'package:serve_cafe_mobile/utils/referral_code.dart';
 import 'package:serve_cafe_mobile/widgets/gradient_app_bar.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
 
 class ChangeReferralScreen extends StatefulWidget {
   const ChangeReferralScreen({super.key});
@@ -28,6 +29,16 @@ class _ChangeReferralScreenState extends State<ChangeReferralScreen> {
   void dispose() {
     _code.dispose();
     super.dispose();
+  }
+
+  Future<void> _refresh() async {
+    final auth = context.read<AuthProvider>();
+    await auth.fetchMe();
+    if (!mounted) return;
+    final code = auth.user?.referralCode;
+    if (code != null) {
+      setState(() => _code.text = code);
+    }
   }
 
   Future<void> _save() async {
@@ -62,7 +73,8 @@ class _ChangeReferralScreenState extends State<ChangeReferralScreen> {
 
     return Scaffold(
       appBar: const GradientAppBar(title: 'Change Referral', showBack: true),
-      body: ListView(
+      body: PullToRefresh.list(
+        onRefresh: _refresh,
         padding: const EdgeInsets.all(16),
         children: [
           Card(

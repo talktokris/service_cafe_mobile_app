@@ -7,6 +7,7 @@ import 'package:serve_cafe_mobile/core/theme/app_theme.dart';
 import 'package:serve_cafe_mobile/data/countries.dart';
 import 'package:serve_cafe_mobile/utils/phone_input.dart';
 import 'package:serve_cafe_mobile/widgets/gradient_app_bar.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -46,6 +47,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _phone.dispose();
     _address.dispose();
     super.dispose();
+  }
+
+  Future<void> _refresh() async {
+    final auth = context.read<AuthProvider>();
+    await auth.fetchMe();
+    if (!mounted) return;
+    final u = auth.user;
+    if (u == null) return;
+    setState(() {
+      _first.text = u.firstName ?? '';
+      _last.text = u.lastName ?? '';
+      _email.text = u.email;
+      _phone.text = u.phone ?? '+977';
+      _address.text = u.address ?? '';
+      _gender = u.gender;
+      if (u.country != null && u.country!.isNotEmpty) _country = u.country!;
+    });
   }
 
   Future<void> _save() async {
@@ -88,7 +106,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const GradientAppBar(title: 'Profile', showBack: true),
-      body: ListView(
+      body: PullToRefresh.list(
+        onRefresh: _refresh,
         padding: const EdgeInsets.all(16),
         children: [
           const Text('Personal Information', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),

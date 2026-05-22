@@ -14,6 +14,7 @@ import 'package:serve_cafe_mobile/widgets/error_state.dart';
 import 'package:serve_cafe_mobile/widgets/gradient_app_bar.dart';
 import 'package:serve_cafe_mobile/widgets/loading_overlay.dart';
 import 'package:serve_cafe_mobile/widgets/summary_stat_row.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -127,11 +128,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           ? const LoadingOverlay()
           : _error != null && _items.isEmpty
               ? ErrorState(message: _error!, onRetry: _load)
-              : RefreshIndicator(
+              : PullToRefresh.list(
                   onRefresh: _load,
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
+                  padding: const EdgeInsets.all(16),
+                  children: [
                       Text('Wallet: ${formatNrs(_walletBalance)}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
                       const SizedBox(height: 12),
                       if (_summary != null)
@@ -204,7 +204,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           );
                         }),
                     ],
-                  ),
                 ),
     );
   }

@@ -16,6 +16,7 @@ import 'package:serve_cafe_mobile/widgets/loading_overlay.dart';
 import 'package:serve_cafe_mobile/widgets/premium_list_card.dart';
 import 'package:serve_cafe_mobile/widgets/premium_screen_body.dart';
 import 'package:serve_cafe_mobile/widgets/section_header.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -114,11 +115,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ? const LoadingOverlay()
             : _error != null && _orders.isEmpty
                 ? ErrorState(message: _error!, onRetry: () => _load(refresh: true))
-                : RefreshIndicator(
-                    color: AppColors.accent,
+                : PullToRefresh.builder(
                     onRefresh: () => _load(refresh: true),
-                    child: ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                     itemCount: _orders.length + 2 + (_hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == 0) {
@@ -151,7 +150,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       return _orderCard(context, o);
                     },
                   ),
-                ),
       ),
     );
   }

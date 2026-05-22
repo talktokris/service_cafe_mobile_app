@@ -17,7 +17,15 @@ class ErrorState extends StatelessWidget {
           children: [
             const Icon(Icons.wifi_off, size: 48, color: AppColors.textMuted),
             const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 15,
+                height: 1.4,
+                color: AppColors.textPrimary,
+              ),
+            ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               ElevatedButton(onPressed: onRetry, child: const Text('Retry')),

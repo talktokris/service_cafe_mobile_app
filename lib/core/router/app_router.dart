@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:serve_cafe_mobile/core/auth/auth_provider.dart';
 import 'package:serve_cafe_mobile/screens/account/account_screen.dart';
+import 'package:serve_cafe_mobile/screens/account/bank_ewallet_setup_screen.dart';
 import 'package:serve_cafe_mobile/screens/account/change_password_screen.dart';
 import 'package:serve_cafe_mobile/screens/account/change_referral_screen.dart';
 import 'package:serve_cafe_mobile/screens/account/my_order_otp_screen.dart';
@@ -39,58 +40,130 @@ class AppRouter {
         if (!ready) {
           return loc == '/splash' ? null : '/splash';
         }
-        const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password'];
-        if (!loggedIn && !publicPaths.any((p) => loc.startsWith(p))) return '/login';
-        if (loggedIn && (loc == '/login' || loc == '/splash' || publicPaths.any((p) => loc.startsWith(p)))) return '/home';
+        const publicPaths = [
+          '/login',
+          '/register',
+          '/forgot-password',
+          '/reset-password',
+        ];
+        if (!loggedIn && !publicPaths.any((p) => loc.startsWith(p))) {
+          return '/login';
+        }
+        if (loggedIn &&
+            (loc == '/login' ||
+                loc == '/splash' ||
+                publicPaths.any((p) => loc.startsWith(p)))) {
+          return '/home';
+        }
         return null;
       },
       routes: [
         GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
         GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
-        GoRoute(path: '/register', builder: (_, s) => RegisterScreen(initialReferralCode: s.uri.queryParameters['ref'])),
-        GoRoute(path: '/forgot-password', builder: (_, _) => const ForgotPasswordScreen()),
+        GoRoute(
+          path: '/register',
+          builder: (_, s) =>
+              RegisterScreen(initialReferralCode: s.uri.queryParameters['ref']),
+        ),
+        GoRoute(
+          path: '/forgot-password',
+          builder: (_, _) => const ForgotPasswordScreen(),
+        ),
         GoRoute(
           path: '/reset-password',
-          builder: (c, s) => ResetPasswordScreen(initialEmail: s.extra as String? ?? s.uri.queryParameters['email']),
+          builder: (c, s) => ResetPasswordScreen(
+            initialEmail: s.extra as String? ?? s.uri.queryParameters['email'],
+          ),
         ),
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) =>
               MainShell(navigationShell: navigationShell),
           branches: [
-            StatefulShellBranch(routes: [
-              GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
-            ]),
-            StatefulShellBranch(routes: [
-              GoRoute(path: '/orders', builder: (_, _) => const OrdersScreen()),
-            ]),
-            StatefulShellBranch(routes: [
-              GoRoute(path: '/earnings', builder: (_, _) => const EarningsScreen()),
-            ]),
-            StatefulShellBranch(routes: [
-              GoRoute(path: '/wallet', builder: (_, _) => const WalletScreen()),
-            ]),
-            StatefulShellBranch(routes: [
-              GoRoute(
-                path: '/account',
-                builder: (_, _) => const AccountScreen(),
-                routes: [
-                  GoRoute(path: 'profile', builder: (_, _) => const ProfileScreen()),
-                  GoRoute(path: 'change-password', builder: (_, _) => const ChangePasswordScreen()),
-                  GoRoute(path: 'change-referral', builder: (_, _) => const ChangeReferralScreen()),
-                  GoRoute(path: 'share-referral', builder: (_, _) => const ShareReferralScreen()),
-                  GoRoute(path: 'tree-view', builder: (_, _) => const TreeViewScreen()),
-                  GoRoute(path: 'badges', builder: (_, _) => const BadgesScreen()),
-                  GoRoute(path: 'transactions', builder: (_, _) => const TransactionsScreen()),
-                  GoRoute(path: 'support', builder: (_, _) => const SupportScreen()),
-                  GoRoute(path: 'order-otp', builder: (_, _) => const MyOrderOtpScreen()),
-                ],
-              ),
-            ]),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/orders',
+                  builder: (_, _) => const OrdersScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/earnings',
+                  builder: (_, _) => const EarningsScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/wallet',
+                  builder: (_, _) => const WalletScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/account',
+                  builder: (_, _) => const AccountScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'profile',
+                      builder: (_, _) => const ProfileScreen(),
+                    ),
+                    GoRoute(
+                      path: 'change-password',
+                      builder: (_, _) => const ChangePasswordScreen(),
+                    ),
+                    GoRoute(
+                      path: 'change-referral',
+                      builder: (_, _) => const ChangeReferralScreen(),
+                    ),
+                    GoRoute(
+                      path: 'bank-ewallet-setup',
+                      builder: (_, _) => const BankEwalletSetupScreen(),
+                    ),
+                    GoRoute(
+                      path: 'share-referral',
+                      builder: (_, _) => const ShareReferralScreen(),
+                    ),
+                    GoRoute(
+                      path: 'tree-view',
+                      builder: (_, _) => const TreeViewScreen(),
+                    ),
+                    GoRoute(
+                      path: 'badges',
+                      builder: (_, _) => const BadgesScreen(),
+                    ),
+                    GoRoute(
+                      path: 'transactions',
+                      builder: (_, _) => const TransactionsScreen(),
+                    ),
+                    GoRoute(
+                      path: 'support',
+                      builder: (_, _) => const SupportScreen(),
+                    ),
+                    GoRoute(
+                      path: 'order-otp',
+                      builder: (_, _) => const MyOrderOtpScreen(),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ],
         ),
         GoRoute(
           path: '/orders/:id',
-          builder: (c, s) => OrderDetailScreen(orderId: int.parse(s.pathParameters['id']!)),
+          builder: (c, s) =>
+              OrderDetailScreen(orderId: int.parse(s.pathParameters['id']!)),
         ),
       ],
     );

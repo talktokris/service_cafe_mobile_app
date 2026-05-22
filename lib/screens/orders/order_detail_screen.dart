@@ -9,6 +9,7 @@ import 'package:serve_cafe_mobile/utils/transaction_helpers.dart';
 import 'package:serve_cafe_mobile/widgets/error_state.dart';
 import 'package:serve_cafe_mobile/widgets/gradient_app_bar.dart';
 import 'package:serve_cafe_mobile/widgets/loading_overlay.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   const OrderDetailScreen({super.key, required this.orderId});
@@ -55,11 +56,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ? const LoadingOverlay()
           : _error != null
               ? ErrorState(message: _error!, onRetry: _load)
-              : RefreshIndicator(
+              : PullToRefresh.list(
                   onRefresh: _load,
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
+                  padding: const EdgeInsets.all(16),
+                  children: [
                       Text(o?['orderShortName']?.toString() ?? 'Order #${o?['id']}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                       Text(formatDateTime(o?['created_at']?.toString()), style: const TextStyle(color: AppColors.textMuted)),
                       const SizedBox(height: 12),
@@ -126,7 +126,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         _section('Notes', o['notes'].toString()),
                       ],
                     ],
-                  ),
                 ),
     );
   }

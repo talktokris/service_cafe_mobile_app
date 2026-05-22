@@ -12,6 +12,7 @@ import 'package:serve_cafe_mobile/widgets/error_state.dart';
 import 'package:serve_cafe_mobile/widgets/gradient_app_bar.dart';
 import 'package:serve_cafe_mobile/widgets/loading_overlay.dart';
 import 'package:serve_cafe_mobile/widgets/premium_list_card.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
 
 class MyOrderOtpScreen extends StatefulWidget {
   const MyOrderOtpScreen({super.key});
@@ -70,18 +71,17 @@ class _MyOrderOtpScreenState extends State<MyOrderOtpScreen> {
           ? const LoadingOverlay()
           : _error != null
               ? ErrorState(message: _error!, onRetry: _load)
-              : _orders.isEmpty
-                  ? const EmptyState(
-                      message: 'No orders found.',
-                      icon: Icons.pin_outlined,
-                    )
-                  : RefreshIndicator(
-                      color: AppColors.accent,
-                      onRefresh: _load,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _orders.length,
-                        itemBuilder: (context, index) {
+              : PullToRefresh.builder(
+                  onRefresh: _load,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _orders.isEmpty ? 1 : _orders.length,
+                  itemBuilder: (context, index) {
+                    if (_orders.isEmpty) {
+                      return const EmptyState(
+                        message: 'No orders found.',
+                        icon: Icons.pin_outlined,
+                      );
+                    }
                           final o = _orders[index] as Map<String, dynamic>;
                           final otp = _otpFor(o);
                           final hasOtp = otp != '—';
@@ -217,8 +217,7 @@ class _MyOrderOtpScreenState extends State<MyOrderOtpScreen> {
                             ),
                           );
                         },
-                      ),
-                    ),
+                  ),
     );
   }
 }

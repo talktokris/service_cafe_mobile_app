@@ -11,6 +11,7 @@ import 'package:serve_cafe_mobile/utils/api_parsing.dart';
 import 'package:serve_cafe_mobile/utils/format.dart';
 import 'package:serve_cafe_mobile/utils/transaction_helpers.dart';
 import 'package:serve_cafe_mobile/widgets/cash_wallet_history_tile.dart';
+import 'package:serve_cafe_mobile/widgets/cash_wallet_transaction_view_modal.dart';
 import 'package:serve_cafe_mobile/widgets/date_filter_bar.dart';
 import 'package:serve_cafe_mobile/widgets/empty_state.dart';
 import 'package:serve_cafe_mobile/widgets/error_state.dart';
@@ -20,6 +21,7 @@ import 'package:serve_cafe_mobile/widgets/locked_feature_banner.dart';
 import 'package:serve_cafe_mobile/widgets/premium_list_card.dart';
 import 'package:serve_cafe_mobile/widgets/premium_screen_body.dart';
 import 'package:serve_cafe_mobile/widgets/wallet_summary_panel.dart';
+import 'package:serve_cafe_mobile/widgets/pull_to_refresh.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -30,6 +32,9 @@ class WalletScreen extends StatefulWidget {
 
 class _WalletScreenState extends State<WalletScreen> {
   Map<String, dynamic>? _summary;
+  double _dailyRemaining = 20000;
+  double _dailyCashOutLimit = 20000;
+  double _maxWithdrawAmount = 0;
   List<Map<String, dynamic>> _cashItems = [];
   List<dynamic> _purchaseItems = [];
   bool _loading = true;
@@ -51,33 +56,87 @@ class _WalletScreenState extends State<WalletScreen> {
     _to = defaultHistoryTo(now);
   }
 
+  static const _pageSize = 50;
+
+  Future<void> _loadCashWallet(ApiClient api) async {
+    final query = <String, dynamic>{'per_page': _pageSize};
+    if (_from != null) {
+      query['from_date'] = DateFormat('yyyy-MM-dd').format(_from!);
+    }
+    if (_to != null) query['to_date'] = DateFormat('yyyy-MM-dd').format(_to!);
+    if (_type.isNotEmpty) query['type'] = _type;
+
+    final body = await api.get(ApiEndpoints.cashWallet, query: query);
+    final data = body['data'] as Map<String, dynamic>;
+    _summary = data['summary'] as Map<String, dynamic>?;
+    _dailyRemaining = (data['daily_remaining'] as num?)?.toDouble() ?? 20000;
+    _dailyCashOutLimit =
+        (data['daily_cash_out_limit'] as num?)?.toDouble() ?? 20000;
+    _maxWithdrawAmount = (data['max_withdraw_amount'] as num?)?.toDouble() ?? 0;
+    final raw = parseApiList(data['transactions']);
+    final totalBal = (_summary?['total_balance'] as num?)?.toDouble() ?? 0;
+    _cashItems = withRunningBalances(raw, totalBal);
+  }
+
+  Future<void> _loadPurchaseTransactions(ApiClient api) async {
+    final txBody = await api.get(ApiEndpoints.transactions);
+    final txData = txBody['data'] as Map<String, dynamic>;
+    _purchaseItems = txData['transactions'] as List<dynamic>? ?? [];
+  }
+
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
-    try {
-      final api = context.read<ApiClient>();
-      final isPaid = context.read<AuthProvider>().user?.isPaid ?? false;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
 
-      if (isPaid) {
-        final query = <String, dynamic>{'per_page': 200};
-        if (_from != null) query['from_date'] = DateFormat('yyyy-MM-dd').format(_from!);
-        if (_to != null) query['to_date'] = DateFormat('yyyy-MM-dd').format(_to!);
-        if (_type.isNotEmpty) query['type'] = _type;
+    final api = context.read<ApiClient>();
+    final isPaid = context.read<AuthProvider>().user?.isPaid ?? false;
+    String? cashErr;
+    String? purchaseErr;
 
-        final body = await api.get(ApiEndpoints.cashWallet, query: query);
-        final data = body['data'] as Map<String, dynamic>;
-        _summary = data['summary'] as Map<String, dynamic>?;
-        final raw = parseApiList(data['transactions']);
-        final totalBal = (_summary?['total_balance'] as num?)?.toDouble() ?? 0;
-        _cashItems = withRunningBalances(raw, totalBal);
+    Future<void> loadCash() async {
+      try {
+        await _loadCashWallet(api);
+      } catch (e) {
+        cashErr = ApiClient.friendlyError(e);
       }
+    }
 
-      final txBody = await api.get(ApiEndpoints.transactions);
-      final txData = txBody['data'] as Map<String, dynamic>;
-      _purchaseItems = txData['transactions'] as List<dynamic>? ?? [];
-    } catch (e) {
-      _error = ApiClient.friendlyError(e);
-    } finally {
-      if (mounted) setState(() => _loading = false);
+    Future<void> loadPurchase() async {
+      try {
+        await _loadPurchaseTransactions(api);
+      } catch (e) {
+        purchaseErr = ApiClient.friendlyError(e);
+      }
+    }
+
+    await Future.wait([
+      if (isPaid) loadCash(),
+      loadPurchase(),
+    ]);
+
+    if (!mounted) return;
+
+    final hasCash = _cashItems.isNotEmpty || _summary != null;
+    final hasPurchase = _purchaseItems.isNotEmpty;
+
+    setState(() {
+      _loading = false;
+      if (isPaid && !hasCash && !hasPurchase) {
+        _error = cashErr ?? purchaseErr;
+      } else if (!isPaid && !hasPurchase) {
+        _error = purchaseErr;
+      } else {
+        _error = null;
+      }
+    });
+
+    if (_error == null && (cashErr != null || purchaseErr != null)) {
+      final partial = cashErr ?? purchaseErr!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(partial)),
+      );
     }
   }
 
@@ -102,7 +161,14 @@ class _WalletScreenState extends State<WalletScreen> {
   Future<void> _cashOut(double balance) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => CashOutDialog(maxAmount: balance),
+      builder: (_) => CashOutDialog(
+        currentBalance: balance,
+        maxWithdrawAmount: _maxWithdrawAmount > 0
+            ? _maxWithdrawAmount
+            : [balance, _dailyRemaining].reduce((a, b) => a < b ? a : b),
+        dailyRemaining: _dailyRemaining,
+        dailyCashOutLimit: _dailyCashOutLimit,
+      ),
     );
     if (ok == true) _load();
   }
@@ -129,12 +195,10 @@ class _WalletScreenState extends State<WalletScreen> {
             ? const LoadingOverlay()
             : _error != null && _cashItems.isEmpty && _purchaseItems.isEmpty
                 ? ErrorState(message: _error!, onRetry: _load)
-                : RefreshIndicator(
-                    color: AppColors.accent,
+                : PullToRefresh.list(
                     onRefresh: _load,
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-                      children: [
+                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+                    children: [
                         if (!isPaid) const LockedFeatureBanner(),
                         if (isPaid && s != null)
                           WalletSummaryPanel(
@@ -198,7 +262,15 @@ class _WalletScreenState extends State<WalletScreen> {
                               icon: Icons.account_balance_wallet_outlined,
                             )
                           else
-                            ..._cashItems.map((m) => CashWalletHistoryTile(transaction: m)),
+                            ..._cashItems.map(
+                              (m) => CashWalletHistoryTile(
+                                transaction: m,
+                                onTap: () => showCashWalletTransactionViewModal(
+                                  context,
+                                  m,
+                                ),
+                              ),
+                            ),
                           const Divider(height: 28),
                         ],
                         const Text(
@@ -235,7 +307,6 @@ class _WalletScreenState extends State<WalletScreen> {
                             );
                           }),
                       ],
-                    ),
                   ),
       ),
     );

@@ -11,15 +11,30 @@ class NetworkMessages {
       'Unable to reach the Serve Cafe server. Check your connection or try again in a few minutes.';
 
   static const serverTimeout =
-      'The server is taking too long to respond. Please try again in a moment.';
+      'The connection is slow or the server is taking too long. Pull down to refresh or tap Retry.';
 
   static const sslError =
       'Secure connection to the server failed. Please contact support if this continues.';
+
+  static const serverBusy =
+      'The server is temporarily unavailable. Please wait a moment and try again.';
+}
+
+bool _isGenericServerMessage(String text) {
+  final lower = text.toLowerCase();
+  return lower.contains('server error') ||
+      lower.contains('internal server error') ||
+      lower == 'error' ||
+      lower.contains('something went wrong');
 }
 
 String resolveApiError(Object error) {
   if (error is! DioException) {
-    return error.toString();
+    final text = error.toString();
+    if (_isGenericServerMessage(text)) {
+      return NetworkMessages.serverBusy;
+    }
+    return text;
   }
 
   final dio = error;
@@ -29,8 +44,9 @@ String resolveApiError(Object error) {
     final msg = data['message'];
     if (msg != null && msg.toString().trim().isNotEmpty) {
       final text = msg.toString().trim();
-      if (text.toLowerCase() == 'server error') {
-        return 'The server could not complete sign in. Please try again in a few minutes or contact support.';
+      if (_isGenericServerMessage(text)) {
+        return _messageForStatus(dio.response?.statusCode) ??
+            NetworkMessages.serverBusy;
       }
       return text;
     }
@@ -52,6 +68,9 @@ String resolveApiError(Object error) {
       return NetworkMessages.sslError;
     case DioExceptionType.connectionError:
       return _connectionErrorMessage(dio);
+    case DioExceptionType.badResponse:
+      return _messageForStatus(dio.response?.statusCode) ??
+          NetworkMessages.serverBusy;
     case DioExceptionType.unknown:
       if (dio.error is HandshakeException) {
         return NetworkMessages.sslError;
@@ -64,7 +83,23 @@ String resolveApiError(Object error) {
       break;
   }
 
-  return dio.message ?? 'Something went wrong. Please try again.';
+  final fallback = dio.message ?? '';
+  if (_isGenericServerMessage(fallback)) {
+    return NetworkMessages.serverBusy;
+  }
+  return fallback.isNotEmpty
+      ? fallback
+      : 'Something went wrong. Please try again.';
+}
+
+String? _messageForStatus(int? status) {
+  if (status == null) return null;
+  if (status == 408 || status == 504) return NetworkMessages.serverTimeout;
+  if (status >= 500) return NetworkMessages.serverBusy;
+  if (status == 429) {
+    return 'Too many requests. Please wait a moment and try again.';
+  }
+  return null;
 }
 
 String _connectionErrorMessage(DioException dio) {
@@ -75,7 +110,6 @@ String _connectionErrorMessage(DioException dio) {
   if (inner is SocketException) {
     return _socketMessage(inner);
   }
-  // Device may have mobile data but API still unreachable (wrong host, firewall, missing permission).
   return NetworkMessages.serverUnreachable;
 }
 
